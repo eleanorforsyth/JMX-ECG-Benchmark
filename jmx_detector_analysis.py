@@ -214,10 +214,10 @@ for detector in all_detectors: # initialise empty arrays:
                 print("Analysing subject %d, %s, %s" %(subject_number, experiment, record_lead))
     
                 # creating class which loads the experiment
-                # ecg_class = GUDb(subject_number, experiment) # For online GUDB access
+                ecg_class = GUDb(subject_number, experiment) # For online GUDB access
                 #path to data folder, for local GUDB file access
-                data_path = str(pathlib.Path(__file__).resolve().parent.parent/'experiment_data')
-                ecg_class = Ecg(data_path, subject_number, experiment)
+                # data_path = str(pathlib.Path(__file__).resolve().parent.parent/'experiment_data')
+                # ecg_class = Ecg(data_path, subject_number, experiment)
                 
                 # getting the raw ECG data numpy arrays from class
                 chest_strap_V2_V1 = ecg_class.cs_V2_V1
