@@ -55,7 +55,7 @@ When testing a new detector ‘save_global_results’ should be set to ‘False�
 
 This code is run after jmx_detector_analysis.py. In the case that you chose to run that code with the seven available detectors from the GUDB database then it displays results from the detector data CSV files saved.
 
-The pre-mapped scores are taken from the generated ‘det_lead_stats.csv’ file. Further values are taken from the ‘data_det_lead.csv’ file, which contains complete arrays of data in the same categories as ‘det_lead_stats.csv’.
+The pre-mapped scores are taken from the generated ‘det_lead_stats.csv’ file. The file ‘data_det_lead.csv’ file, contains complete arrays of data in the same categories as ‘det_lead_stats.csv’.
 The results for each detectors extra beats, missed beats and temporal jitter are normalised and then mapped using a curve to allow all three to be multiplied together. The mapping curve gives 1.0 for ideal performance, 0.5 for average performance, and 0 if the normalised performance value is greater than ten times the global mean value. The overall JMX Benchmark values for Einthoven II and chest strap results are shown together on a bar graph for comparison. The breakdown benchmark scores of results by category (missed, extra, temporal jitter) are plotted separately.
 
 When jmx_stats_analysis.py is used to analyse the results of your personal detector, the same list of ‘all_detectors’ should be used. If no ‘global_results.csv’ file exists, saved default values generated from the GUDB and seven detectors in ecgdetectors.py will be used as references for the benchmark calculation.
