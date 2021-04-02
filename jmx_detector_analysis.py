@@ -33,7 +33,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from ecg_gudb_database import GUDb
 from ecgdetectors import Detectors
-from ecg_gla_database import Ecg # For local file use
 import pathlib # For local file use
 
 
@@ -214,8 +213,12 @@ for detector in all_detectors: # initialise empty arrays:
                 print("Analysing subject %d, %s, %s" %(subject_number, experiment, record_lead))
     
                 # creating class which loads the experiment
-                ecg_class = GUDb(subject_number, experiment) # For online GUDB access
-                #path to data folder, for local GUDB file access
+        
+                # For online GUDB access
+                ecg_class = GUDb(subject_number, experiment) 
+            
+                # For local GUDB file access:
+                # from ecg_gla_database import Ecg # For local file use
                 # data_path = str(pathlib.Path(__file__).resolve().parent.parent/'experiment_data')
                 # ecg_class = Ecg(data_path, subject_number, experiment)
                 
