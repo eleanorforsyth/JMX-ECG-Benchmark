@@ -32,7 +32,7 @@ pip3 install ecg_gudb_database
 
 ## Usage
 
-**jmx_detector_analysis.py**
+### jmx_detector_analysis.py
 
 The Python code jmx_detector_analysis.py uses the seven heartbeat detectors specified in py-ecg-detectors ([Porr and Luis, 2019](https://doi.org/10.5281/zenodo.3353396)). When run, it applies the detectors to the GUDB ECG database ([Porr and Luis, 2018](http://dx.doi.org/10.5525/gla.researchdata.716)). It creates a folder named 'saved_csv' in the current directory to save the output CSV files. Additionally, it can be noted that the matched filter detector can use a default template or user-generated averaged PQRST shape for each subject.
 
@@ -51,7 +51,7 @@ To benchmark a detector of your choice that is not one of the seven available fr
 
 When testing a new detector ‘save_global_results’ should be set to ‘False’, as only a representative sample of trusted detectors should be used to generate the global mean values against which detectors are benchmarked, and adding an unknown or single detector would not generate a valid global value.
 
-**jmx_stats_analysis.py**
+### jmx_stats_analysis.py
 
 This code is run after jmx_detector_analysis.py. In the case that you chose to run that code with the seven available detectors from the GUDB database then it displays results from the detector data CSV files saved.
 
