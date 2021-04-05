@@ -54,7 +54,7 @@ def det_delay(det_posn, anno_R):
 
 def nearest_diff(source_array, find_nearest_match_to):
     # Calculates the nearest difference between values in two arrays and saves
-    diff={}
+    diff=[]
     store_index=[]
     
     len_source_array=len(source_array)
