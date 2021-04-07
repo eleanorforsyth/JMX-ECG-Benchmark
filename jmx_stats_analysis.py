@@ -60,7 +60,7 @@ def return_globals():
         print()
         print('Using default Global reference mean values')
         print()
-        Global_jitter_mad = 2.994091613940169
+        Global_jitter_mad = 2.991280672344543
         Global_missed_mean = 2.761072988147224
         Global_extra_mean = 4.480973175296319
     
