@@ -52,26 +52,25 @@ def det_delay(det_posn, anno_R):
     return mean_delay
 
 
-def nearest_diff(source_array, find_nearest_match_to):
+def nearest_diff(source_array, nearest_match):
     # Calculates the nearest difference between values in two arrays and saves
-    diff=[]
-    store_index=[]
+    # index and sample position of nearest
+    diff=[] # Temporary working array for all differences
+    used_indices=[] # Arraywhich will contain only one instance of nearest matches
     
     len_source_array=len(source_array)
-    nearest=np.zeros((len_source_array,3)) # store nearest anno index and position
+    nearest=np.zeros((len_source_array,3)) # store nearest index and position
     
-    # missposn=np.zeros(len_source_array) # missposn holds actual position of missed beats in samples
-    for i in range (0,len_source_array): # scan through detected peaks 
-        nearest[i,2]=source_array[i] # store actual detection position in nearest at position i
-        diff=find_nearest_match_to - source_array[i] # subtract ith detection value from ALL annotated values
+    for i in range (0,len_source_array): # scan through 'source' peaks 
+        diff = nearest_match - source_array[i] # subtract ith source array value from ALL nearest match values
         index=np.abs(diff).argmin() # return the index of the smallest difference value
         nearest[i, 0] = index # store the value of that smallest difference in array 'nearest' at position 'i'
-        if i==0 or index> nearest[i-1, 0]:
-            store_index.append((index, find_nearest_match_to[index])) # save as tuple
-        nearest[i, 1] = find_nearest_match_to[index]
-        used_indices=store_index # used indices in 'find_nearest_match_to' array
+        nearest[i, 1] = nearest_match[index]
+        nearest[i,2] = source_array[i] # store actual 'source' position in nearest at position i
+        if i==0 or index> nearest[i-1, 0]: # Eliminate any multiple matches
+            used_indices.append((index, nearest_match[index])) # save as tuple in used_indices
+        
     return nearest, used_indices
-
 
 def trim_after_detection(detections, annotations, start_index, end_index):
 
@@ -84,7 +83,6 @@ def trim_after_detection(detections, annotations, start_index, end_index):
     detections_trimmed = detections[ (detections >= det_start_posn) & (detections <= det_end_posn) ] # remove detections with positions outwith range
     
     return detections_trimmed, annotations_trimmed
-
 
 
 def interval_analysis(det_posn, anno_R):
@@ -108,33 +106,31 @@ def interval_analysis(det_posn, anno_R):
     for x in reversed(used_anno): # work backwards, deleting used annotations
         index1 = x[0] # index of used anno is first in tuple
         unused_anno = np.delete(unused_anno, index1, 0)
-    # next
-                
+    
+    """ EXTRA BEAT - IDENTIFICATION """
+    # Find 'unpaired' detections which are NOT the nearest match to annotated positions
+    extra_det_posn = det_posn # starting point - now remove any paired detection positions
+    
+    for i in range(len_det_posn-1, -1, -1): # work backwards through extra_det_posn deleting already 'paired' detections
+        # print(i)
+        for x in used_det:
+            if det_posn[i] == x[1]: # if detected position already 'used'
+                extra_det_posn = np.delete(extra_det_posn, i, 0)
+          
     """ TEMPORAL ANALYSIS SECTION """
     interval_differences_for_jitter=[]
         
-    for i in range(1, len(used_anno)-1): # -1 put in for sub 7 jogging, chest - used_anno and used_det different lengths???
+    for i in range(1, len(used_anno)): 
        
         valid_interval_anno=int(used_anno[i][1] - used_anno[i-1][1])    
         valid_interval_det = (nearest_det[(used_anno[i][0])][1]) - (nearest_det[(used_anno[i-1][0])][1])
         
         difference=valid_interval_det-valid_interval_anno
         interval_differences_for_jitter.append(difference)
-    
-    # next
-    
-    """ EXTRA BEAT - IDENTIFICATION """
-    # Find 'unpaired' detections which are NOT the nearest match to annotated positions
-    extra_det_posn=det_posn # starting point - now remove any paired detection positions
-    
-    for i in range(len_det_posn-1, -1, -1): # wok backwards through extra_det_posn deleting already 'paired' detections
-        # print(i)
-        for x in used_det:
-            if det_posn[i] == x[1]: # if detected position already 'used'
-                extra_det_posn = np.delete(extra_det_posn, i, 0)
-    # next
-    missed_beats=unused_anno #for clarity
+
+    missed_beats = unused_anno #for clarity
     extra_beats = extra_det_posn #for clarity
+    
     return interval_differences_for_jitter, missed_beats, extra_beats
 
 #%%
