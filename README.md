@@ -31,7 +31,7 @@ pip3 install ecg_gudb_database
 ```
 
 ---
-Download the templates.zip file and unzip it and ensure that the "templates" folder is placed within the working directory. As well as individualised templates it includes the default templates for 250Hz and 360Hz.
+Download the templates file and the folder is placed within the working directory. As well as individualised templates it includes the default templates for 250Hz and 360Hz.
 
 ## Usage
 
