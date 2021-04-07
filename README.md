@@ -22,6 +22,7 @@ python3 setup.py install [--user]
 ```
 *Use the option --user if you don't have system-wise write permission.*
 
+---
 Install ecg_gudb_database ([Howell and Porr, 2018](https://pypi.org/project/ecg-gudb-database/)) via the package manager [pip](https://pip.pypa.io/en/stable/) or pip3 which is a version of the pip installer for Python3.
 
 ```bash
@@ -29,6 +30,8 @@ pip install ecg_gudb_database
 pip3 install ecg_gudb_database
 ```
 
+---
+Download the templates.zip file and unzip it and ensure that the "templates" folder is placed within the working directory. As well as individualised templates it includes the default templates for 250Hz and 360Hz.
 
 ## Usage
 
