@@ -14,10 +14,9 @@ import pandas as pd
 import numpy as np
 import os.path as path
 import matplotlib.pyplot as plt
+from ecgdetectors import Detectors
 
-all_detectors=['two_average_detector', 'swt_detector', 'engzee_detector', 'christov_detector', 'hamilton_detector', 'pan_tompkins_detector', 'matched_filter_detector']
 all_recording_leads=["einthoven_ii", "chest_strap_V2_V1"] # can be expanded if required
-# all_experiments = ["sitting","maths","walking","hand_bike","jogging"] # Needed?
 all_categories=["jitter", "missed", "extra"] # 
 
 
@@ -30,27 +29,10 @@ def mapping_curve():
     # x = np.array([0.0, 1.0, 8.0, 15.0]) # alternative mapping for more detail in lower values.
     y = np.array([1.0, for_x_is_1, 0.2, 0.0]) # 'destination' output points for piecewise mapping
     z = np.polyfit(x, y, 3) # z holds the polynomial coefficients of 3rd order curve fit
-    # i.e. z[0] = coeff of x^3, z[1] = coeff of x^2, z[2] = coeff of x, z[3] = constant
-    # If piecewise mapping points are changed, check that polynomial approximation
-    # curve is smooth and does not dip below zero - move 3rd input point (default 6.0)
-    # if required.
-    # To test plot 3rd order curve fit (uncomment to plot):
-        
-    # x=np.linspace(0,10,1001)
-    # y=(z[0]*x*x*x)+(z[1]*x*x)+(z[2]*x)+z[3]
-    # plt.figure()
-    # plt.title('Test plot of 3rd order polynomial mapping curve')
-    # plt.plot(x,y, color='darkblue')
-    # plt.xlabel("Normalised input parameter value")
-    # plt.ylabel("Mapped output parameter value")
-    # plt.tick_params(axis='x')
-    # plt.tick_params(axis='y')
-    # plt.grid(b=None, which='both', axis='both')
-    
     return z
 
 def return_globals():
-    global_filename ="saved_csv/global_results.csv" # set path to 'global_results.csv'
+    global_filename ="results/global_results.csv" # set path to 'global_results.csv'
     if path.exists(global_filename) == True: # Does Global values file exist?
         global_values=pd.read_csv(global_filename, dtype=float, index_col=0)
         Global_jitter_mad=pd.Series.tolist(global_values["Global_jitter_mad"])[0]
@@ -147,8 +129,8 @@ def autolabel(rects): # https://matplotlib.org/3.1.1/gallery/lines_bars_and_mark
 #%%
 # All detectors and recording leads used for analysis should be used for benchmarking
 
-data_filename ="saved_csv/data_det_lead.csv"  
-stats_filename ="saved_csv/det_lead_stats.csv"
+data_filename ="results/data_det_lead.csv"  
+stats_filename ="results/det_lead_stats.csv"
 
 
 bench_data=pd.read_csv(data_filename, dtype=float, index_col=0)
@@ -167,9 +149,12 @@ err_extra_chest = []
 
 for record_lead in all_recording_leads: # loop for all chosen leads
     BM_array = [] # Create empty list for that record lead's benchmarks
-    
-    for detector in all_detectors: # loop for all detectors
-    
+
+    detectors = Detectors(250)
+    for d in detectors.detector_list:
+
+        detector = detector[1].__name__
+
         for category in all_categories:
             if category == 'jitter':
                 name_end='_mad'

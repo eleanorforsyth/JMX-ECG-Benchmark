@@ -1,11 +1,22 @@
+#!/usr/bin/python3
+"""
+This script benchmarks all detectors with the GU database.
+It runs it for both the chest strap and Einthoven II with loose cables.
+"""
+import pathlib
+from multiprocessing import Process
 import numpy as np
 import pandas as pd
 import _tester_utils
+import os
 
 from ecgdetectors import Detectors
 from ecg_gudb_database import GUDb
 
-class GUDB_test:
+fs = 250 #sampling rate
+resultsdir = 'results'
+
+class Binary_test:
     """
     This class benchmarks detectors against the GU database.
     You need to install the API for the GUDB: https://github.com/berndporr/ECG-GUDB
@@ -13,7 +24,7 @@ class GUDB_test:
     
     def single_classifier_test(self, detector, tolerance=0, config="chest_strap"):
 
-        max_delay_in_samples = 250 / 3
+        max_delay_in_samples = fs / 3
 
         total_subjects = GUDb.total_subjects
 
@@ -67,16 +78,23 @@ class GUDB_test:
 
     def classifer_test_all(self, tolerance=0, config="chest_strap"):
 
+        try:
+            os.mkdir(resultsdir)
+        except OSError as error:
+            pass
+
         output_names = ['TP', 'FP', 'FN', 'TN']
 
-        total_results = np.zeros((GUDb.total_subjects, 4*len(GUDb.experiments)*len(_tester_utils.det_names)), dtype=int)
+        detectors = Detectors(fs)
+
+        total_results = np.zeros((GUDb.total_subjects, 4*len(GUDb.experiments)*len(detectors.detector_list)), dtype=int)
 
         counter = 0
-        for det_name in _tester_utils.det_names:
+        for det in detectors.detector_list:
 
-            print('\n'+config+" "+det_name+":")
+            print('\n'+config+" "+det[0]+":")
 
-            result = self.single_classifier_test(_tester_utils.det_from_name(det_name, 250), tolerance=tolerance, config=config)
+            result = self.single_classifier_test(det[1], tolerance=tolerance, config=config)
             result = result[:, 1:]
 
             total_results[:, counter:counter+(4*len(GUDb.experiments))] = result
@@ -86,13 +104,27 @@ class GUDB_test:
         index_labels = np.arange(GUDb.total_subjects)
         col_labels = []
 
-        for det_name in _tester_utils.det_names:
+        for det in detectors.detector_list:
             for experiment_name in GUDb.experiments:
                 for output_name in output_names:
-                    label = det_name+" "+experiment_name+" "+output_name
+                    label = det[1].__name__+" "+experiment_name+" "+output_name
                     col_labels.append(label)
 
         total_results_pd = pd.DataFrame(total_results, index_labels, col_labels, dtype=int)            
-        total_results_pd.to_csv('results_GUDB_'+config+'.csv', sep=',')
+        total_results_pd.to_csv('results/binary'+config+'.csv', sep=',')
 
         return total_results_pd
+
+
+
+def run_tests(leads):
+    gu_test = Binary_test()
+    gu_test.classifer_test_all(tolerance=0, config=leads)
+
+pgustrap = Process(target=run_tests, args=('chest_strap',))
+pgustrap.start()
+pgucables = Process(target=run_tests, args=('loose_cables',))
+pgucables.start()
+    
+pgustrap.join()
+pgucables.join()

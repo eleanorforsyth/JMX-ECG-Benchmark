@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
 
@@ -27,13 +28,16 @@ and are used as reference values for the new overall benchmarking method
 Create a folder named 'saved_csv' in the current directory to save csv files to.
 
 """
-
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from ecg_gudb_database import GUDb
 from ecgdetectors import Detectors
 import pathlib # For local file use
+
+# directory where the results are stored
+resultsdir = "results"
 
 
 """ FUNCTIONS """
@@ -139,9 +143,13 @@ def interval_analysis(det_posn, anno_R):
     START OF MAIN CODE   
 ***************************
 """
+try:
+    os.mkdir(resultsdir)
+except OSError as error:
+    pass
 
 fs = 250 #sampling rate
-detectors = Detectors(fs)# Initialise detectors for 250Hz sample rate (GUDB)
+detectors = Detectors(fs) # Initialise detectors for 250Hz sample rate (GUDB)
 
 current_dir = pathlib.Path(__file__).resolve()
 
@@ -171,26 +179,30 @@ global_missed=[]
 global_extra=[]
 
 # Detectors, recording leads and experiments can be added/removed from lists as required
-all_detectors=['two_average_detector', 'swt_detector', 'engzee_detector', 'christov_detector', 'hamilton_detector', 'pan_tompkins_detector', 'matched_filter_detector']
 all_recording_leads=["einthoven_ii", "chest_strap_V2_V1"] # can be expanded if required
 all_experiments = ["sitting","maths","walking","hand_bike","jogging"]
 
-for detector in all_detectors: # initialise empty arrays:
+for detector in detectors.detector_list:
+
+    print("Processing:",detector[0])
+
+    detectorname = detector[1].__name__
+    detectorfunc = detector[1]
     
-    name_jitter_sub = 'jitter_accum_sub_' + detector
+    name_jitter_sub = 'jitter_accum_sub_' + detectorname
     exec(name_jitter_sub+' = []') # initialse for all detector names, jitter arrays
-    name_missed_sub = 'missed_accum_sub_' + detector
+    name_missed_sub = 'missed_accum_sub_' + detectorname
     exec(name_missed_sub + ' = []') # initialse for all detector names, missed beat arrays
-    name_extra_sub = 'extra_accum_sub_' + detector
+    name_extra_sub = 'extra_accum_sub_' + detectorname
     exec(name_extra_sub + ' = []') # initialse for all detector names, missed detection arrays
 
     for record_lead in all_recording_leads: # loop for all chosen leads
         
-        name_jitter = 'jitter_accum_' + record_lead +'_' + detector
+        name_jitter = 'jitter_accum_' + record_lead +'_' + detectorname
         exec(name_jitter+' = []') # initialse for all rec leads, det names (jitter arrays)
-        name_missed = 'missed_accum_' + record_lead +'_' + detector
+        name_missed = 'missed_accum_' + record_lead +'_' + detectorname
         exec(name_missed + ' = []') # initialse for all rec leads, det names (missed beat arrays)
-        name_extra = 'extra_accum_' + record_lead +'_' + detector
+        name_extra = 'extra_accum_' + record_lead +'_' + detectorname
         exec(name_extra + ' = []') # initialse for all rec leads, det names (missed detection arrays)
         
         jitter_all_exp=[]
@@ -240,9 +252,7 @@ for detector in all_detectors: # initialise empty arrays:
                         analysed=analysed+1
                     else:
                         exist=False
-                        print('')
                         print("No chest strap annotations exist for subject %d, %s exercise" %(subject_number, experiment))
-                        print('')
                 else:
                     if ecg_class.anno_cables_exists:
                         data_anno = ecg_class.anno_cables
@@ -250,9 +260,7 @@ for detector in all_detectors: # initialise empty arrays:
                         analysed=analysed+1
                     else:
                         exist=False
-                        print('')
                         print("No cables annotations exist for subject %d, %s exercise" %(subject_number, experiment))
-                        print('')
                         
 #%% Detection
         
@@ -266,12 +274,7 @@ for detector in all_detectors: # initialise empty arrays:
         # artefacts such as missed beats and extra detections while settling
             
                 if exist==True: # only proceed if an annotation exists
-                    # form of detector call: 'detected_peaks = detectors.two_average_detector(data)'
-                    if detector == 'matched_filter_detector':
-                        template_name = ('templates/sitting_Sub'+str(subject_number)+'_'+record_lead+'_PQRSTave_44.csv')
-                        detected_peaks = detectors.matched_filter_detector(data, template_name)
-                    else:
-                        detected_peaks = eval('detectors.'+detector+'(data)') # call detector class for current detector
+                    detected_peaks = detectorfunc(data) # call detector class for current detector
                     delay_correction=det_delay(detected_peaks, data_anno) # fetch mean delay
                     detected_peaks_corr=np.array(detected_peaks)+int(delay_correction) # Correction for detector delay
                     
@@ -282,7 +285,7 @@ for detector in all_detectors: # initialise empty arrays:
                         detected_peaks_corr_trim = detected_peaks_corr
                     if len(detected_peaks_corr_trim)<=10:
                         print()
-                        warning='WARNING: Less than ten detections while using '+detector+' to analyse subject no. '+str(subject_number)+', '+record_lead+', '+experiment+'.'
+                        warning='WARNING: Less than ten detections while using '+detectorname+' to analyse subject no. '+str(subject_number)+', '+record_lead+', '+experiment+'.'
                         print(warning)
                         print()
                     interval_results = interval_analysis(detected_peaks_corr_trim, data_anno_trim) # perform interval based analysis
@@ -290,8 +293,7 @@ for detector in all_detectors: # initialise empty arrays:
                     jitter=np.concatenate((jitter, interval_results[0])) # jitter results
                     missed.append(len(interval_results[1])) # missed beat results
                     extra.append(len(interval_results[2])) # extra detection results
-                    
-                    print(detector + ' done')
+
                     
             # ^ LOOP AROUND FOR NEXT SUBJECT
             
@@ -304,7 +306,7 @@ for detector in all_detectors: # initialise empty arrays:
             jitter_df = pd.DataFrame({"jitter":jitter_list}) # since length different
             missed_extra_df = pd.DataFrame({"missed_beats":missed_beats, "extra_detections":extra_detections})
             categories_df = pd.concat([jitter_df, missed_extra_df], axis=1)
-            file_name='saved_csv/'+detector+'_'+record_lead+'_'+experiment+'.csv'
+            file_name='results/'+detectorname+'_'+record_lead+'_'+experiment+'.csv'
             categories_df.to_csv(file_name, index=True)
             #print(new.head())
             
@@ -354,11 +356,11 @@ for detector in all_detectors: # initialise empty arrays:
 # https://www.edureka.co/community/65139/valueerror-arrays-same-length-valueerror-arrays-same-length
 det_lead_df = pd.DataFrame.from_dict(data_det_lead, orient='index')
 det_lead_df=det_lead_df.transpose() # transpose colums and rows
-file_name='saved_csv/data_det_lead.csv'
+file_name=resultsdir+'/data_det_lead.csv'
 det_lead_df.to_csv(file_name)
 
 df_stats = pd.DataFrame(det_lead_stats, index=[0])
-file_name='saved_csv/det_lead_stats.csv'
+file_name=resultsdir+'/det_lead_stats.csv'
 df_stats.to_csv(file_name)
 
 if save_global_results==True:   
@@ -379,10 +381,3 @@ if save_global_results==True:
     global_data={"Global_jitter_mad":global_jitter_mad, "Global_missed_mean":global_missed_mean, "Global_extra_mean":global_extra_mean}
     global_df = pd.DataFrame(global_data, index=[0])
     global_df.to_csv('saved_csv/global_results.csv')
-
-
-
-
-
-
-

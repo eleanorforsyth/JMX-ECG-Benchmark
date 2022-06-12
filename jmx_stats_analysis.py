@@ -13,10 +13,10 @@ import pandas as pd
 import numpy as np
 import os.path as path
 import matplotlib.pyplot as plt
+from ecgdetectors import Detectors
 
-all_detectors=['two_average_detector', 'swt_detector', 'engzee_detector', 'christov_detector', 'hamilton_detector', 'pan_tompkins_detector', 'matched_filter_detector']
+
 all_recording_leads=["einthoven_ii", "chest_strap_V2_V1"] # can be expanded if required
-# all_experiments = ["sitting","maths","walking","hand_bike","jogging"] # Needed?
 all_categories=["jitter", "missed", "extra"] # 
 
 
@@ -142,8 +142,11 @@ mapped_params={} # dictionary for parameters once they have been mapped
 for record_lead in all_recording_leads: # loop for all chosen leads
     BM_array = [] # Create empty list for that record lead's benchmarks
     
-    for detector in all_detectors: # loop for all detectors
-    
+    detectors = Detectors()
+    for d in detectors.detector_list:
+
+        detector = detector[1].__name__
+
         for category in all_categories:
             if category == 'jitter':
                 name_end='_mad'

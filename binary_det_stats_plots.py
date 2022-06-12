@@ -3,6 +3,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import scipy.stats as stats
+from ecgdetectors import Detectors
+
+detectors = Detectors()
+det_names = [i[1].__name__ for i in detectors.get_detector_list()]
+plot_names = [i[0] for i in detectors.get_detector_list()]
 
 def str_join(a, b, c):
 
@@ -72,30 +77,8 @@ def compare_det_test(results_df, detector_name1, detector_name2, experiment=None
         return None
 
 
-def single_plot(data, std, y_label, title = None):
-    fig, ax = plt.subplots()
-    plot_names = ['Elgendi et al', 'Matched Filter', 'Kalidas and Tamil', 'Engzee Mod', 'Christov', 'Hamilton', 'Pan and Tompkins']
-    x_pos = np.arange(len(plot_names))
-
-    fig.set_size_inches(10, 7)
-    rects1 = ax.bar(x_pos, data, yerr=std, width = 0.65, align='center', alpha=0.5, ecolor='black', capsize=10)
-    ax.set_ylim([0,100])
-    ax.set_ylabel(y_label)
-    ax.set_xlabel('Detector')
-    ax.set_xticks(x_pos)
-    ax.set_xticklabels(plot_names)
-
-    if title!=None:
-        ax.set_title(title)
-
-    plt.tight_layout()
-
-    return rects1
-
-
 def double_plot(data1, std1, data2, std2, y_label, legend1, legend2, title=None):
     fig, ax = plt.subplots()
-    plot_names = ['Elgendi et al', 'Matched Filter', 'Kalidas and Tamil', 'Engzee Mod', 'Christov', 'Hamilton', 'Pan and Tompkins']
     x_pos = np.arange(len(plot_names))
 
     fig.set_size_inches(10, 7)
@@ -128,24 +111,11 @@ def print_stat(p):
 
 
 # GUDB
-gudb_cs_results = pd.read_csv('results_GUDB_chest_strap.csv', dtype=int, index_col=0)
-gudb_cable_results = pd.read_csv('results_GUDB_loose_cables.csv', dtype=int, index_col=0)
+gudb_cs_results = pd.read_csv('results/binarychest_strap.csv', dtype=int, index_col=0)
+gudb_cable_results = pd.read_csv('results/binaryloose_cables.csv', dtype=int, index_col=0)
 
-# MITDB
-mitdb_results = pd.read_csv('results_MITDB.csv', dtype=int, index_col=0)
-
-det_names = ['two_average', 'matched_filter', 'swt', 'engzee', 'christov', 'hamilton', 'pan_tompkins']
-plot_names = ['Elgendi et al', 'Matched Filter', 'Kalidas and Tamil', 'Engzee Mod', 'Christov', 'Hamilton', 'Pan and Tompkins']
 experiment_names = ['sitting','maths','walking','hand_bike','jogging']
 output_names = ['TP', 'FP', 'FN', 'TN']
-
-print("MIT")
-for det1 in det_names:
-    for det2 in det_names:
-        p = compare_det_test(mitdb_results, det1, det2)
-        print_stat(p)
-    print("\\\\")
-
 
 print("CHEST STRAP SITTING")
 for det1 in det_names:
@@ -180,8 +150,6 @@ for det1 in det_names:
 
 
 # calculating results
-mitdb_avg,mitdb_std = get_result(mitdb_results, det_names)
-print("mitdb:",mitdb_avg)
 gudb_cs_sitting_avg,gudb_cs_sitting_std = get_result(gudb_cs_results, det_names, 'sitting')
 print("chest strap sitting:",gudb_cs_sitting_avg)
 gudb_cable_sitting_avg,gudb_cable_sitting_std = get_result(gudb_cable_results, det_names, 'sitting')
@@ -189,8 +157,6 @@ print("lose cables sitting:",gudb_cable_sitting_avg)
 gudb_cs_jogging_avg,gudb_cs_jogging_std = get_result(gudb_cs_results, det_names, 'jogging')
 gudb_cable_jogging_avg,gudb_cable_jogging_std = get_result(gudb_cable_results, det_names, 'jogging')
 
-# plotting
-single_plot(mitdb_avg, mitdb_std, 'Sensitivity (%)', 'MITDB')
 
 double_plot(gudb_cs_sitting_avg, gudb_cs_sitting_std,
             gudb_cable_sitting_avg, gudb_cable_sitting_std,
