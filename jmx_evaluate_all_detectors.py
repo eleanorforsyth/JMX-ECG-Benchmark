@@ -172,8 +172,8 @@ for detector in detectors.detector_list:
                     interval_results = jmx_analysis.evaluate(detected_peaks, data_anno) # perform interval based analysis
                     
                     jitter=np.concatenate((jitter, interval_results[0])) # jitter results
-                    missed.append(len(interval_results[1])) # missed beat results
-                    extra.append(len(interval_results[2])) # extra detection results
+                    missed.append(interval_results[1]) # missed beat results
+                    extra.append(interval_results[2]) # extra detection results
 
                     
             # ^ LOOP AROUND FOR NEXT SUBJECT

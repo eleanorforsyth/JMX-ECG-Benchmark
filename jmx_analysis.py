@@ -57,6 +57,7 @@ def mapping_curve():
     # To test plot 3rd order curve fit (uncomment to plot):
     return z
 
+
 def normalise_and_map(param,param_norm):
     # Normalises and maps to benchmark value using 'poly' 3rd order polynomial
     poly=mapping_curve()
@@ -69,6 +70,7 @@ def normalise_and_map(param,param_norm):
         # and when multiplied, the overall benchmark will also be 0
     
     return param_mapped
+
 
 def nearest_diff(source_array, nearest_match):
     # Calculates the nearest difference between values in two arrays and saves
@@ -89,6 +91,7 @@ def nearest_diff(source_array, nearest_match):
             used_indices.append((index, nearest_match[index])) # save as tuple in used_indices
         
     return nearest, used_indices
+
 
 def evaluate(det_posn, anno_R, trim=True):
     """
@@ -149,9 +152,11 @@ def evaluate(det_posn, anno_R, trim=True):
     missed_beats = unused_anno #for clarity
     extra_beats = extra_det_posn #for clarity
     
-    return interval_differences_for_jitter, missed_beats, extra_beats
+    return interval_differences_for_jitter, len(missed_beats), len(extra_beats)
 
-def jmx_benchark(jmxList):
+
+
+def jmx_benchark_rating(jmxList):
     """
     Takes a list of jmx triplets and calculates the relative jmx benchmark of them between 0 and 1.
     """
