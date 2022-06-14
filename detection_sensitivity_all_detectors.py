@@ -11,49 +11,10 @@ import os
 from datetime import datetime
 from ecgdetectors import Detectors
 from ecg_gudb_database import GUDb
+import sensitivity_analysis
 
 fs = 250 #sampling rate
 resultsdir = 'results'
-
-"""
-From the detected R peaks the function works itself backwards to
-calculate the median delay the detector introduces. This is used
-for benchmarking to compensate for different delays the detctors
-introduce.
-"""
-def calcMedianDelay(detected_peaks, anno, search_samples):
-
-    r_peaks = []
-    window = int(search_samples)
-
-    for i in detected_peaks:
-        d = np.abs(i-anno)
-        ii = np.argmin(d)
-        # print(ii,d[ii],d)
-        r_peaks.append(d[ii])
-
-    m = int(np.median(r_peaks))
-    return m
-
-
-def evaluate_detector(test, annotation, delay, tol):
-
-    test = np.unique(test)
-    annotation = np.unique(annotation)
-    
-    TP = 0
-
-    for anno_value in annotation:
-        test_range = np.arange(anno_value-tol+delay, anno_value+1+tol+delay)
-        in1d = np.in1d(test_range, test)
-        if np.any(in1d):
-            TP = TP + 1
-
-    FP = len(test)-TP
-    FN = len(annotation)-TP
-
-    return TP, FP, FN
-
 
 def get_time():
 
@@ -105,19 +66,13 @@ class Binary_test:
 
                     r_peaks = detector(unfiltered_ecg)
 
-                    delay = calcMedianDelay(r_peaks, anno, max_delay_in_samples)
-                    print("delay = ",delay)
-
-                    # there must be a delay in all cases so anything below is a bad sign
-                    if delay > 1:
-
-                        TP, FP, FN = evaluate_detector(r_peaks, anno, delay, tol=tolerance)
-                        TN = len(unfiltered_ecg)-(TP+FP+FN)
-
-                        results[subject_number, exp_counter] = TP
-                        results[subject_number, exp_counter+1] = FP
-                        results[subject_number, exp_counter+2] = FN
-                        results[subject_number, exp_counter+3] = TN
+                    TP, FP, FN = sensitivity_analysis.evaluate(r_peaks, anno, tol=tolerance)
+                    TN = len(unfiltered_ecg)-(TP+FP+FN)
+                    
+                    results[subject_number, exp_counter] = TP
+                    results[subject_number, exp_counter+1] = FP
+                    results[subject_number, exp_counter+2] = FN
+                    results[subject_number, exp_counter+3] = TN
 
                 exp_counter = exp_counter+4
 
