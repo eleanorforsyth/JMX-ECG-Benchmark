@@ -42,42 +42,6 @@ import jmx_analysis
 # directory where the results are stored
 resultsdir = "results"
 
-
-""" FUNCTIONS """
-
-def det_delay(det_posn, anno_R):
-    # Calculates the nearest difference and detect extra and missed detections
-    diff={}
-    len_det_posn=len(det_posn)
-    delay=np.zeros(len_det_posn) # We have only one difference for each detected value
-    
-    for i in range (0,len_det_posn): # scan through detected peaks
-        diff=anno_R - det_posn[i] # subtract ith detection value from ALL annotated values
-        index=np.abs(diff).argmin() # return the index of the smallest difference value
-        delay[i]=diff[index] # store the value of that smallest difference in array 'val' at position 'i'
-    mean_delay=np.mean(delay)
-    return mean_delay
-
-
-def trim_after_detection(detections, annotations, start_index, end_index):
-
-    # start_index = annotated index to start at after trimming
-    # end_index = annotated index to end at after trimming
-    det_start_posn=int((annotations[start_index]+annotations[start_index-1])/2) # allow for detection half interval before start point annotation
-    det_end_posn=int((annotations[end_index]+annotations[end_index+1])/2) # allow for detection half interval after end point annotation
-    
-    annotations_trimmed=annotations[start_index:(end_index+1)] # trim annotations to match trimmed detections
-    detections_trimmed = detections[ (detections >= det_start_posn) & (detections <= det_end_posn) ] # remove detections with positions outwith range
-    
-    return detections_trimmed, annotations_trimmed
-
-
-#%%
-"""
-***************************
-    START OF MAIN CODE   
-***************************
-"""
 try:
     os.mkdir(resultsdir)
 except OSError as error:
@@ -93,8 +57,6 @@ current_dir = pathlib.Path(__file__).resolve()
 save_global_results = True # when 'True' saves global jitter, missed, extra values as csv and prints
 
 trim=True # CHANGE TO FALSE IF YOU DONT WANT TO TRIM
-a = 10 # number of annotated beats to trim from start
-b = -5 # number of annotated beats to trim from end
 # * Values chosen by observation of detector settling intervals required *
 
 #initialise for plots (*if used*)
@@ -197,33 +159,17 @@ for detector in detectors.detector_list:
                         exist=False
                         print("No cables annotations exist for subject %d, %s exercise" %(subject_number, experiment))
                         
-#%% Detection
+                #%% Detection
         
-        ### Applying detector to each subject ECG data set then correct for mean detector
-        # delay as referenced to annotated R peak position
-        # Note: the correction factor for each detector doesn't need to be exact,
-        # but centres the detection point for finding the nearest annotated match
-        # It may/will be different for different subjects and experiments
-        
-        # If trim is True, start and end will be trimmed to avoid detector
-        # artefacts such as missed beats and extra detections while settling
-            
+                ### Applying detector to each subject ECG data set then correct for mean detector
+                # delay as referenced to annotated R peak position
+                # Note: the correction factor for each detector doesn't need to be exact,
+                # but centres the detection point for finding the nearest annotated match
+                # It may/will be different for different subjects and experiments
+
                 if exist==True: # only proceed if an annotation exists
                     detected_peaks = detectorfunc(data) # call detector class for current detector
-                    delay_correction=det_delay(detected_peaks, data_anno) # fetch mean delay
-                    detected_peaks_corr=np.array(detected_peaks)+int(delay_correction) # Correction for detector delay
-                    
-                    if trim==True:
-                        detected_peaks_corr_trim, data_anno_trim = trim_after_detection(detected_peaks_corr, data_anno, a, b)
-                    else: # keep naming consistent even if trim not applied
-                        data_anno_trim = data_anno
-                        detected_peaks_corr_trim = detected_peaks_corr
-                    if len(detected_peaks_corr_trim)<=10:
-                        print()
-                        warning='WARNING: Less than ten detections while using '+detectorname+' to analyse subject no. '+str(subject_number)+', '+record_lead+', '+experiment+'.'
-                        print(warning)
-                        print()
-                    interval_results = jmx_analysis.evaluate(detected_peaks_corr_trim, data_anno_trim) # perform interval based analysis
+                    interval_results = jmx_analysis.evaluate(detected_peaks, data_anno) # perform interval based analysis
                     
                     jitter=np.concatenate((jitter, interval_results[0])) # jitter results
                     missed.append(len(interval_results[1])) # missed beat results
@@ -231,8 +177,7 @@ for detector in detectors.detector_list:
 
                     
             # ^ LOOP AROUND FOR NEXT SUBJECT
-            
-            
+                        
             # Save to csv files, all subjects concatenated/appended
             # https://stackoverflow.com/questions/27126511/add-columns-different-length-pandas/33404243
             jitter_list=jitter.tolist()

@@ -7,8 +7,39 @@ identified. Jitter is taken as the difference (in samples) between the
 annotated interval and the detected interval, and is not truly HRV as it is
 calculated not just at rest.
 """
-
 import numpy as np
+
+a = 2 # number of annotated beats to trim from start
+b = -2 # number of annotated beats to trim from end
+
+def det_delay(det_posn, anno_R):
+    # Calculates the nearest difference and detect extra and missed detections
+    diff={}
+    len_det_posn=len(det_posn)
+    delay=np.zeros(len_det_posn) # We have only one difference for each detected value
+    
+    for i in range (0,len_det_posn): # scan through detected peaks
+        diff=anno_R - det_posn[i] # subtract ith detection value from ALL annotated values
+        index=np.abs(diff).argmin() # return the index of the smallest difference value
+        delay[i]=diff[index] # store the value of that smallest difference in array 'val' at position 'i'
+    mean_delay=np.mean(delay)
+    return mean_delay
+
+
+def trim_after_detection(detections, annotations, start_index, end_index):
+
+    # start_index = annotated index to start at after trimming
+    # end_index = annotated index to end at after trimming
+    det_start_posn=int((annotations[start_index]+annotations[start_index-1])/2) # allow for detection half interval before start point annotation
+    det_end_posn=int((annotations[end_index]+annotations[end_index+1])/2) # allow for detection half interval after end point annotation
+    
+    annotations_trimmed=annotations[start_index:(end_index+1)] # trim annotations to match trimmed detections
+    detections_trimmed = detections[ (detections >= det_start_posn) & (detections <= det_end_posn) ] # remove detections with positions outwith range
+    
+    return detections_trimmed, annotations_trimmed
+
+
+
 
 def mapping_curve():
     # equate mean point to cube root of 0.5 so that if all three parameters are average, when multiplied together we get 50% as an overall result
@@ -59,12 +90,21 @@ def nearest_diff(source_array, nearest_match):
         
     return nearest, used_indices
 
-def evaluate(det_posn, anno_R):
+def evaluate(det_posn, anno_R, trim=True):
     """
     JMX analysis of interval variation, missed beat and extra detection positions
     det_posn: the timestamps of the detector in sample positions
     anno_R: the ground truth in samples
     """
+    delay_correction = det_delay(det_posn, anno_R)
+    det_posn = np.array(det_posn)+int(delay_correction) # Correction for detector delay
+                    
+    if trim==True:
+        det_posn, anno_R = trim_after_detection(det_posn, anno_R, a, b)
+    if len(det_posn)<=10:
+        warning='WARNING: Less than ten detections while using '+detectorname+' to analyse subject no. '+str(subject_number)+', '+record_lead+', '+experiment+'.'
+        print(warning)
+    
     len_anno_R = len(anno_R)
 
     all_anno = np.zeros((len_anno_R,2)) # store for nearest anno index and position
