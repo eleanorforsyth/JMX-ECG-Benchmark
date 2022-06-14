@@ -14,39 +14,11 @@ import numpy as np
 import os.path as path
 import matplotlib.pyplot as plt
 from ecgdetectors import Detectors
-
+import jmx_analysis
 
 all_recording_leads=["einthoven_ii", "chest_strap_V2_V1"] # can be expanded if required
 all_categories=["jitter", "missed", "extra"] # 
 
-
-def mapping_curve():
-    # equate mean point to cube root of 0.5 so that if all three parameters are average, when multiplied together we get 50% as an overall result
-    for_x_is_1 = 0.5 ** (1. / 3) # i.e cube root of 0.5
-    # To use individual parameters for comparison, use parameter^3, again to make 0.5=mean
-    
-    x = np.array([0.0, 1.0, 6.0, 10.0]) # 'source' input points for piecewise mapping
-    # x = np.array([0.0, 1.0, 8.0, 15.0]) # alternative mapping for more detail in lower values.
-    y = np.array([1.0, for_x_is_1, 0.2, 0.0]) # 'destination' output points for piecewise mapping
-    z = np.polyfit(x, y, 3) # z holds the polynomial coefficients of 3rd order curve fit
-    # i.e. z[0] = coeff of x^3, z[1] = coeff of x^2, z[2] = coeff of x, z[3] = constant
-    # If piecewise mapping points are changed, check that polynomial approximation
-    # curve is smooth and does not dip below zero - move 3rd input point (default 6.0)
-    # if required.
-    # To test plot 3rd order curve fit (uncomment to plot):
-        
-    # x=np.linspace(0,10,1001)
-    # y=(z[0]*x*x*x)+(z[1]*x*x)+(z[2]*x)+z[3]
-    # plt.figure()
-    # plt.title('Test plot of 3rd order polynomial mapping curve')
-    # plt.plot(x,y, color='darkblue')
-    # plt.xlabel("Normalised input parameter value")
-    # plt.ylabel("Mapped output parameter value")
-    # plt.tick_params(axis='x')
-    # plt.tick_params(axis='y')
-    # plt.grid(b=None, which='both', axis='both')
-    
-    return z
 
 def return_globals():
     global_filename ="saved_csv/global_results.csv" # set path to 'global_results.csv'
@@ -70,7 +42,7 @@ def normalise_and_map(param, category):
     # Identifies param type, normalises using appropriate global value, and
     # maps to benchmark value using 'poly' 3rd order polynomial
     global_constants=return_globals()
-    poly=mapping_curve()
+    poly=jmx_analysis.mapping_curve()
     # Normalise by dividing by appropriate global reference constant
     if category=='jitter':
         param_norm = param/global_constants[0]

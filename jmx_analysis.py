@@ -10,6 +10,35 @@ calculated not just at rest.
 
 import numpy as np
 
+def mapping_curve():
+    # equate mean point to cube root of 0.5 so that if all three parameters are average, when multiplied together we get 50% as an overall result
+    for_x_is_1 = 0.5 ** (1. / 3) # i.e cube root of 0.5
+    # To use individual parameters for comparison, use parameter^3, again to make 0.5=mean
+    
+    x = np.array([0.0, 1.0, 6.0, 10.0]) # 'source' input points for piecewise mapping
+    # x = np.array([0.0, 1.0, 8.0, 15.0]) # alternative mapping for more detail in lower values.
+    y = np.array([1.0, for_x_is_1, 0.2, 0.0]) # 'destination' output points for piecewise mapping
+    z = np.polyfit(x, y, 3) # z holds the polynomial coefficients of 3rd order curve fit
+    # i.e. z[0] = coeff of x^3, z[1] = coeff of x^2, z[2] = coeff of x, z[3] = constant
+    # If piecewise mapping points are changed, check that polynomial approximation
+    # curve is smooth and does not dip below zero - move 3rd input point (default 6.0)
+    # if required.
+    # To test plot 3rd order curve fit (uncomment to plot):
+    return z
+
+def normalise_and_map(param,param_norm):
+    # Normalises and maps to benchmark value using 'poly' 3rd order polynomial
+    poly=mapping_curve()
+    if param_norm<=10.0: # Is normalised param less than 10x the global reference?
+        x = param_norm    
+        param_mapped=(poly[0]*x*x*x)+(poly[1]*x*x)+(poly[2]*x)+poly[3]
+    else:
+        param_mapped=0.0 # if the input parameter is greater than 10x the global
+        # reference, a returned value of 0.0 will signify failure as a detector,
+        # and when multiplied, the overall benchmark will also be 0
+    
+    return param_mapped
+
 def nearest_diff(source_array, nearest_match):
     # Calculates the nearest difference between values in two arrays and saves
     # index and sample position of nearest
@@ -82,3 +111,8 @@ def evaluate(det_posn, anno_R):
     
     return interval_differences_for_jitter, missed_beats, extra_beats
 
+def jmx_benchark(jmxList):
+    """
+    Takes a list of jmx triplets and calculates the relative jmx benchmark of them between 0 and 1.
+    """
+    pass ## todo!
