@@ -36,21 +36,21 @@ def calcMedianDelay(detected_peaks, anno, search_samples):
     return m
 
 
-def evaluate_detector(test, annotation, delay, tol=0):
+def evaluate_detector(test, annotation, delay, tol):
 
     test = np.unique(test)
-    reference = np.unique(annotation)
+    annotation = np.unique(annotation)
     
     TP = 0
 
-    for anno_value in test:
-        test_range = np.arange(anno_value-tol-delay, anno_value+1+tol-delay)
-        in1d = np.in1d(test_range, reference)
+    for anno_value in annotation:
+        test_range = np.arange(anno_value-tol+delay, anno_value+1+tol+delay)
+        in1d = np.in1d(test_range, test)
         if np.any(in1d):
             TP = TP + 1
-    
+
     FP = len(test)-TP
-    FN = len(reference)-TP 
+    FN = len(annotation)-TP
 
     return TP, FP, FN
 

@@ -42,7 +42,7 @@ def get_sensivities(results_df, detector_name, experiment=None):
     for tp,fn in zip(total_tp,total_fn):
             if (tp + fn) > 0:
                 s = tp/(tp+fn)*100.0
-                if s > 0:
+                if not (s < 0):
                         se.append(s)
 
     return np.array(se)
@@ -53,6 +53,7 @@ def get_result(results_df, det_names, experiment=None):
     m = []
     s = []
     for det in det_names:
+        print(det,experiment,get_sensivities(results_df, det, experiment))
         m.append(np.mean(get_sensivities(results_df, det, experiment)))
         s.append(np.std(get_sensivities(results_df, det, experiment)))
 
@@ -85,7 +86,7 @@ def double_plot(data1, std1, data2, std2, y_label, legend1, legend2, title=None)
     width = 0.4
     rects1 = ax.bar(x_pos, data1, width, yerr=std1, alpha=0.5, ecolor='black', capsize=10)
     rects2 = ax.bar(x_pos+width, data2, width, yerr=std2, alpha=0.5, ecolor='black', capsize=10)
-    ax.set_ylim([0,100])
+    ax.set_ylim([0,150])
     ax.set_ylabel(y_label)
     ax.set_xlabel('Detector')
     ax.set_xticks(x_pos + width / 2)
