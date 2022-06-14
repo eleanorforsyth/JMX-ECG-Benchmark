@@ -7,14 +7,62 @@ import pathlib
 from multiprocessing import Process
 import numpy as np
 import pandas as pd
-import _tester_utils
 import os
-
+from datetime import datetime
 from ecgdetectors import Detectors
 from ecg_gudb_database import GUDb
 
 fs = 250 #sampling rate
 resultsdir = 'results'
+
+"""
+From the detected R peaks the function works itself backwards to
+calculate the median delay the detector introduces. This is used
+for benchmarking to compensate for different delays the detctors
+introduce.
+"""
+def calcMedianDelay(detected_peaks, anno, search_samples):
+
+    r_peaks = []
+    window = int(search_samples)
+
+    for i in detected_peaks:
+        d = np.abs(i-anno)
+        ii = np.argmin(d)
+        # print(ii,d[ii],d)
+        r_peaks.append(d[ii])
+
+    m = int(np.median(r_peaks))
+    return m
+
+
+def evaluate_detector(test, annotation, delay, tol=0):
+
+    test = np.unique(test)
+    reference = np.unique(annotation)
+    
+    TP = 0
+
+    for anno_value in test:
+        test_range = np.arange(anno_value-tol-delay, anno_value+1+tol-delay)
+        in1d = np.in1d(test_range, reference)
+        if np.any(in1d):
+            TP = TP + 1
+    
+    FP = len(test)-TP
+    FN = len(reference)-TP 
+
+    return TP, FP, FN
+
+
+def get_time():
+
+        time = str(datetime.now().time())
+        time = time[:5]
+        time = time.replace(':', '.')
+        
+        return time
+
 
 class Binary_test:
     """
@@ -22,7 +70,7 @@ class Binary_test:
     You need to install the API for the GUDB: https://github.com/berndporr/ECG-GUDB
     """
     
-    def single_classifier_test(self, detector, tolerance=0, config="chest_strap"):
+    def single_classifier_test(self, detector, tolerance, config="chest_strap"):
 
         max_delay_in_samples = fs / 3
 
@@ -57,13 +105,13 @@ class Binary_test:
 
                     r_peaks = detector(unfiltered_ecg)
 
-                    delay = _tester_utils.calcMedianDelay(r_peaks, unfiltered_ecg, max_delay_in_samples)
+                    delay = calcMedianDelay(r_peaks, anno, max_delay_in_samples)
                     print("delay = ",delay)
 
                     # there must be a delay in all cases so anything below is a bad sign
                     if delay > 1:
 
-                        TP, FP, FN = _tester_utils.evaluate_detector(r_peaks, anno, delay, tol=tolerance)
+                        TP, FP, FN = evaluate_detector(r_peaks, anno, delay, tol=tolerance)
                         TN = len(unfiltered_ecg)-(TP+FP+FN)
 
                         results[subject_number, exp_counter] = TP
@@ -76,7 +124,7 @@ class Binary_test:
         return results
 
 
-    def classifer_test_all(self, tolerance=0, config="chest_strap"):
+    def classifer_test_all(self, tolerance, config="chest_strap"):
 
         try:
             os.mkdir(resultsdir)
@@ -119,7 +167,7 @@ class Binary_test:
 
 def run_tests(leads):
     gu_test = Binary_test()
-    gu_test.classifer_test_all(tolerance=0, config=leads)
+    gu_test.classifer_test_all(tolerance=(fs/10), config=leads)
 
 pgustrap = Process(target=run_tests, args=('chest_strap',))
 pgustrap.start()
