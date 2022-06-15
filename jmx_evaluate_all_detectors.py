@@ -137,7 +137,7 @@ def evaluate_detector(detector):
         jmx_leads[record_lead] = jmx_experiments
         
     # ^ LOOP AROUND FOR NEXT LEAD
-    serialized_data = json.dump(jmx_leads,indent="\t")
+    serialized_data = json.dumps(jmx_leads,indent="\t")
     f = open(resultsdir+"/"+detectorname+".json","w")
     f.write(serialized_data)
     f.close

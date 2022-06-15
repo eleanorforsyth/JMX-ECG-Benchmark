@@ -14,19 +14,23 @@ b = -2 # number of annotated beats to trim from end
 
 norm_jmx = [2.991280672344543, 2.761072988147224, 4.480973175296319]
 
-def det_delay(det_posn, anno_R):
-    # Calculates the nearest difference and detect extra and missed detections
-    diff={}
-    len_det_posn=len(det_posn)
-    delay=np.zeros(len_det_posn) # We have only one difference for each detected value
-    
-    for i in range (0,len_det_posn): # scan through detected peaks
-        diff=det_posn[i] - anno_R # subtract ALL annotated values from the ith detection value
-        index=np.abs(diff).argmin() # return the index of the smallest difference value
-        delay[i]=diff[index] # store the value of that smallest difference in array 'val' at position 'i'
-    delay=np.median(delay)
-    print(delay)
-    return delay
+"""
+From the detected R peaks the function works itself backwards to
+calculate the median delay the detector introduces. This is used
+for benchmarking to compensate for different delays the detctors
+introduce.
+"""
+def calcMedianDelay(detected_peaks, anno):
+
+    r_peaks = []
+
+    for i in detected_peaks:
+        d = np.abs(i-anno)
+        ii = np.argmin(d)
+        r_peaks.append(d[ii])
+
+    m = int(np.median(r_peaks))
+    return m
 
 
 def trim_after_detection(detections, annotations, start_index, end_index):
@@ -103,7 +107,8 @@ def evaluate(det_posn, anno_R, trim=True):
     det_posn: the timestamps of the detector in sample positions
     anno_R: the ground truth in samples
     """
-    delay_correction = det_delay(det_posn, anno_R)
+    
+    delay_correction = calcMedianDelay(det_posn, anno_R)
     det_posn = np.array(det_posn)-int(delay_correction) # Correction for detector delay
                     
     if trim==True:
