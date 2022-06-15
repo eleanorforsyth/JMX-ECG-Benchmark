@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
-
 This code will run all subjects, all experiments, all leads recordings through
 all detectors or a single detector as required.
 For each recording (for which there are annotations) passed through a detector
@@ -16,23 +15,15 @@ seperate csv files. This means that all 'raw' interval analysis data is
 available for subsequent benchmarking, plotting or analysis by lead type,
 experiment, etc as desired and has not been combined in a way which results in
 loss of information.
-The matched filter detector can use a default template or user generated
-averaged PQRST shapes for each subject.
-The positional data for missed and extra beats can be used to plot markers
-onto source recordings to indicate where and how a detector is behaving with
-actual ECG recordings.
-This code can be used to generate 'global' average standard deviatrion and
-mean missed beat and extra detection values which are then saved as a csv file
-and are used as reference values for the new overall benchmarking method
-
 """
+
 import os
 import numpy as np
 import json
-import matplotlib.pyplot as plt
 from ecg_gudb_database import GUDb
 from ecgdetectors import Detectors
 import pathlib # For local file use
+from multiprocessing import Process
 
 # The JMX analysis for a detector
 import jmx_analysis
@@ -46,40 +37,23 @@ except OSError as error:
     pass
 
 fs = 250 #sampling rate
+
 detectors = Detectors(fs) # Initialise detectors for 250Hz sample rate (GUDB)
 
 current_dir = pathlib.Path(__file__).resolve()
-
-#%% Initialise parameters for analysis
-
-save_norm_results = True # when 'True' saves global jitter, missed, extra values as csv and prints
-
-trim=True # CHANGE TO FALSE IF YOU DONT WANT TO TRIM
-# * Values chosen by observation of detector settling intervals required *
-
-#initialise for plots (*if used*)
-plt.rc('xtick',labelsize=10)
-plt.rc('ytick',labelsize=10)
-
-analysed=0 # overall count of analysed subjects
-
-# initialise for global average jitter standard deviation, and global mean missed and extra beats
-jitter_std_dev_total = 0.0 # running total for standard deviations for jitter for each detector
-
-norm_jitter=[]
-norm_missed=[]
-norm_extra=[]
 
 # Detectors, recording leads and experiments can be added/removed from lists as required
 all_recording_leads=["einthoven_ii", "chest_strap_V2_V1"] # can be expanded if required
 all_experiments = ["sitting","maths","walking","hand_bike","jogging"]
 
-for detector in detectors.detector_list:
+def evaluate_detector(detector):
 
     detectorname = detector[1].__name__
     detectorfunc = detector[1]
     
     print("Processing:",detector[0])
+
+    analysed=0 # overall count of analysed subjects
 
     jmx_leads = {} # initialise for data to be saved by lead and detector
 
@@ -120,7 +94,7 @@ for detector in detectors.detector_list:
             
                 data=eval(record_lead) # set data array (i.e. recording to be processed)
                
-                if 'chest' in record_lead: 
+                if 'chest' in record_lead:
                     if ecg_class.anno_cs_exists:
                         data_anno = ecg_class.anno_cs
                         exist=True
@@ -162,7 +136,13 @@ for detector in detectors.detector_list:
         jmx_leads[record_lead] = jmx_experiments
         
     # ^ LOOP AROUND FOR NEXT LEAD
-    serialized_info = json.dumps(jmx_leads)
+    serialized_data = json.dump(jmx_leads,indent="\t")
     f = open(resultsdir+"/"+detectorname+".json","w")
-    f.write(serialized_info)
+    f.write(serialized_data)
     f.close
+
+
+
+for detector in detectors.detector_list:
+    pEvalDet = Process(target=evaluate_detector, args=(detector,))
+    pEvalDet.start()

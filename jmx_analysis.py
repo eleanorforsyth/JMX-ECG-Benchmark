@@ -107,8 +107,9 @@ def evaluate(det_posn, anno_R, trim=True):
                     
     if trim==True:
         det_posn, anno_R = trim_after_detection(det_posn, anno_R, a, b)
+        
     if len(det_posn)<=10:
-        warning='WARNING: Less than ten detections while using '+detectorname+' to analyse subject no. '+str(subject_number)+', '+record_lead+', '+experiment+'.'
+        warning='WARNING: Less than ten detections'
         print(warning)
     
     len_anno_R = len(anno_R)
