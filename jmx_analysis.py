@@ -12,6 +12,8 @@ import numpy as np
 a = 2 # number of annotated beats to trim from start
 b = -2 # number of annotated beats to trim from end
 
+norm_jmx = [2.991280672344543, 2.761072988147224, 4.480973175296319]
+
 def det_delay(det_posn, anno_R):
     # Calculates the nearest difference and detect extra and missed detections
     diff={}
@@ -58,9 +60,10 @@ def mapping_curve():
     return z
 
 
-def normalise_and_map(param,param_norm):
+def normalise_and_map(param,norm):
     # Normalises and maps to benchmark value using 'poly' 3rd order polynomial
     poly=mapping_curve()
+    param_norm = param / norm;
     if param_norm<=10.0: # Is normalised param less than 10x the global reference?
         x = param_norm    
         param_mapped=(poly[0]*x*x*x)+(poly[1]*x*x)+(poly[2]*x)+poly[3]
@@ -156,8 +159,17 @@ def evaluate(det_posn, anno_R, trim=True):
 
 
 
-def jmx_benchark_rating(jmxList):
+def individual_score(jmx):
     """
-    Takes a list of jmx triplets and calculates the relative jmx benchmark of them between 0 and 1.
+    Takes a jmx and calculates the relative jmx benchmark of them between 0 and 1.
     """
-    pass ## todo!
+    for i in range(len(jmx)):
+        jmx = normalise_and_map(name_val, jmx_norm[i])
+
+        
+def total_score(jmx):
+    jmx =  normalise_jmx(jmx)
+    j = 1.0
+    for i in jmx:
+        j = j * i
+    return j

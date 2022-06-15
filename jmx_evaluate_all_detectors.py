@@ -25,12 +25,10 @@ This code can be used to generate 'global' average standard deviatrion and
 mean missed beat and extra detection values which are then saved as a csv file
 and are used as reference values for the new overall benchmarking method
 
-Create a folder named 'saved_csv' in the current directory to save csv files to.
-
 """
 import os
 import numpy as np
-import pandas as pd
+import json
 import matplotlib.pyplot as plt
 from ecg_gudb_database import GUDb
 from ecgdetectors import Detectors
@@ -54,7 +52,7 @@ current_dir = pathlib.Path(__file__).resolve()
 
 #%% Initialise parameters for analysis
 
-save_global_results = True # when 'True' saves global jitter, missed, extra values as csv and prints
+save_norm_results = True # when 'True' saves global jitter, missed, extra values as csv and prints
 
 trim=True # CHANGE TO FALSE IF YOU DONT WANT TO TRIM
 # * Values chosen by observation of detector settling intervals required *
@@ -65,15 +63,12 @@ plt.rc('ytick',labelsize=10)
 
 analysed=0 # overall count of analysed subjects
 
-data_det_lead = {} # initialise for data to be saved by lead and detector
-det_lead_stats = {} # initialise for data to be saved by lead and detector
-
 # initialise for global average jitter standard deviation, and global mean missed and extra beats
 jitter_std_dev_total = 0.0 # running total for standard deviations for jitter for each detector
 
-global_jitter=[]
-global_missed=[]
-global_extra=[]
+norm_jitter=[]
+norm_missed=[]
+norm_extra=[]
 
 # Detectors, recording leads and experiments can be added/removed from lists as required
 all_recording_leads=["einthoven_ii", "chest_strap_V2_V1"] # can be expanded if required
@@ -81,41 +76,24 @@ all_experiments = ["sitting","maths","walking","hand_bike","jogging"]
 
 for detector in detectors.detector_list:
 
-    print("Processing:",detector[0])
-
     detectorname = detector[1].__name__
     detectorfunc = detector[1]
     
-    name_jitter_sub = 'jitter_accum_sub_' + detectorname
-    exec(name_jitter_sub+' = []') # initialse for all detector names, jitter arrays
-    name_missed_sub = 'missed_accum_sub_' + detectorname
-    exec(name_missed_sub + ' = []') # initialse for all detector names, missed beat arrays
-    name_extra_sub = 'extra_accum_sub_' + detectorname
-    exec(name_extra_sub + ' = []') # initialse for all detector names, missed detection arrays
+    print("Processing:",detector[0])
+
+    jmx_leads = {} # initialise for data to be saved by lead and detector
 
     for record_lead in all_recording_leads: # loop for all chosen leads
         
-        name_jitter = 'jitter_accum_' + record_lead +'_' + detectorname
-        exec(name_jitter+' = []') # initialse for all rec leads, det names (jitter arrays)
-        name_missed = 'missed_accum_' + record_lead +'_' + detectorname
-        exec(name_missed + ' = []') # initialse for all rec leads, det names (missed beat arrays)
-        name_extra = 'extra_accum_' + record_lead +'_' + detectorname
-        exec(name_extra + ' = []') # initialse for all rec leads, det names (missed detection arrays)
-        
-        jitter_all_exp=[]
-        missed_all_exp=[]
-        extra_all_exp=[]
+        jmx_experiments = {}
         
         for experiment in all_experiments: # loop for all chosen experiments
             
-            jitter=[]
-            missed=[]
-            extra=[]
+            jmx_subjects=[]
             
             for subject_number in range(0, 25): # loop for all subjects
                 
-                # print('')
-                print("Analysing subject %d, %s, %s" %(subject_number, experiment, record_lead))
+                print("Analysing subject {}, {}, {}, {}".format(subject_number, experiment, record_lead, detector[0]))
     
                 # creating class which loads the experiment
         
@@ -170,94 +148,21 @@ for detector in detectors.detector_list:
                 if exist==True: # only proceed if an annotation exists
                     detected_peaks = detectorfunc(data) # call detector class for current detector
                     interval_results = jmx_analysis.evaluate(detected_peaks, data_anno) # perform interval based analysis
-                    
-                    jitter=np.concatenate((jitter, interval_results[0])) # jitter results
-                    missed.append(interval_results[1]) # missed beat results
-                    extra.append(interval_results[2]) # extra detection results
+                    jmx_subjects.append(interval_results)
 
                     
             # ^ LOOP AROUND FOR NEXT SUBJECT
-                        
-            # Save to csv files, all subjects concatenated/appended
-            # https://stackoverflow.com/questions/27126511/add-columns-different-length-pandas/33404243
-            jitter_list=jitter.tolist()
-            missed_beats=missed
-            extra_detections=extra
-            jitter_df = pd.DataFrame({"jitter":jitter_list}) # since length different
-            missed_extra_df = pd.DataFrame({"missed_beats":missed_beats, "extra_detections":extra_detections})
-            categories_df = pd.concat([jitter_df, missed_extra_df], axis=1)
-            file_name='results/'+detectorname+'_'+record_lead+'_'+experiment+'.csv'
-            categories_df.to_csv(file_name, index=True)
-            #print(new.head())
-            
-            # Concatenate all experiment results, for all subjects
-            exec(name_jitter + ' = np.concatenate((' + name_jitter + ', jitter_list))') # jitter results
-            exec(name_missed + ' = np.concatenate((' + name_missed + ', missed))') # jitter results
-            exec(name_extra + ' = np.concatenate((' + name_extra + ', extra))') # jitter results
+
+            jmx_experiments[experiment] = jmx_subjects
                         
         # ^ LOOP AROUND FOR NEXT EXPERIMENT
         
-        
         # Add data for analysis by lead to (full array) 'data_det_lead' dictionary
         
-        exec('data_det_lead["'+name_jitter+'"] = '+name_jitter)
-        exec('data_det_lead["'+name_missed+'"] = '+name_missed)
-        exec('data_det_lead["'+name_extra+'"] = '+name_extra)
-        
-        # Add stats for analysis by lead to dictionaries (SD, missed and extra mean values)
-        # MAD is 'np.mean(abs(x - np.mean(x)))', but for a detected
-        # interval=anno interval we can used: 'np.mean(abs(x))'
-        # since matched interval difference=0
-        exec(name_jitter+'_mad = np.mean(abs('+name_jitter+'))')
-        exec(name_missed+'_mean = np.mean(np.asarray('+name_missed+'))')
-        exec(name_extra+'_mean = np.mean('+name_extra+')')
-        # Add stats for analysis to 'det_lead_stats' dictionary (SD, missed and extra mean dictionaries)
-        exec('det_lead_stats["'+name_jitter+'_mad"] = '+name_jitter+'_mad')
-        exec('det_lead_stats["'+name_missed+'_mean"] = '+name_missed+'_mean')
-        exec('det_lead_stats["'+name_extra+'_mean"] = '+name_extra+'_mean')
-        
-        
-        # det_lead_stats
-        
-        # for global calculations:
-        exec(name_jitter_sub+ '= np.concatenate(('+name_jitter_sub+', ' + name_jitter +'))')
-        exec(name_missed_sub+ '= np.concatenate(('+name_missed_sub+', ' + name_missed +'))')
-        exec(name_extra_sub+ '= np.concatenate(('+name_extra_sub+', ' + name_extra +'))')        
+        jmx_leads[record_lead] = jmx_experiments
         
     # ^ LOOP AROUND FOR NEXT LEAD
-    
-    exec('global_jitter=np.concatenate((global_jitter, ' + name_jitter_sub +'))')
-    exec('global_missed=np.concatenate((global_missed, ' + name_missed_sub +'))')
-    exec('global_extra=np.concatenate((global_extra, ' + name_extra_sub +'))')
-    
-# END DETECTOR LOOP
-
-# Save data as csv files:
-# https://www.edureka.co/community/65139/valueerror-arrays-same-length-valueerror-arrays-same-length
-det_lead_df = pd.DataFrame.from_dict(data_det_lead, orient='index')
-det_lead_df=det_lead_df.transpose() # transpose colums and rows
-file_name=resultsdir+'/data_det_lead.csv'
-det_lead_df.to_csv(file_name)
-
-df_stats = pd.DataFrame(det_lead_stats, index=[0])
-file_name=resultsdir+'/det_lead_stats.csv'
-df_stats.to_csv(file_name)
-
-if save_global_results==True:   
-    # global_jitter_mad = np.mean(abs(global_jitter - np.mean(global_jitter))) (by definition)
-    global_jitter_mad = np.mean(abs(global_jitter)) # since matched interval difference =0
-    print('')
-    print('global_jitter_mad = ', global_jitter_mad)
-    
-    global_missed_mean=np.mean(global_missed)
-    print('')
-    print('global_missed_mean = ', global_missed_mean)
-    
-    global_extra_mean=np.mean(global_extra)
-    print('')
-    print('global_extra_mean = ', global_extra_mean)
-    
-    # Save Global mean benchmark reference values 
-    global_data={"Global_jitter_mad":global_jitter_mad, "Global_missed_mean":global_missed_mean, "Global_extra_mean":global_extra_mean}
-    global_df = pd.DataFrame(global_data, index=[0])
-    global_df.to_csv('saved_csv/global_results.csv')
+    serialized_info = json.dumps(jmx_leads)
+    f = open(resultsdir+"/"+detectorname+".json","w")
+    f.write(serialized_info)
+    f.close
