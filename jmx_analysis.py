@@ -21,11 +21,12 @@ def det_delay(det_posn, anno_R):
     delay=np.zeros(len_det_posn) # We have only one difference for each detected value
     
     for i in range (0,len_det_posn): # scan through detected peaks
-        diff=anno_R - det_posn[i] # subtract ith detection value from ALL annotated values
+        diff=det_posn[i] - anno_R # subtract ALL annotated values from the ith detection value
         index=np.abs(diff).argmin() # return the index of the smallest difference value
         delay[i]=diff[index] # store the value of that smallest difference in array 'val' at position 'i'
-    mean_delay=np.mean(delay)
-    return mean_delay
+    delay=np.median(delay)
+    print(delay)
+    return delay
 
 
 def trim_after_detection(detections, annotations, start_index, end_index):
@@ -103,7 +104,7 @@ def evaluate(det_posn, anno_R, trim=True):
     anno_R: the ground truth in samples
     """
     delay_correction = det_delay(det_posn, anno_R)
-    det_posn = np.array(det_posn)+int(delay_correction) # Correction for detector delay
+    det_posn = np.array(det_posn)-int(delay_correction) # Correction for detector delay
                     
     if trim==True:
         det_posn, anno_R = trim_after_detection(det_posn, anno_R, a, b)

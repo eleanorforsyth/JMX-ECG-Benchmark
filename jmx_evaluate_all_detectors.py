@@ -17,6 +17,7 @@ experiment, etc as desired and has not been combined in a way which results in
 loss of information.
 """
 
+import sys
 import os
 import numpy as np
 import json
@@ -142,7 +143,9 @@ def evaluate_detector(detector):
     f.close
 
 
-
-for detector in detectors.detector_list:
-    pEvalDet = Process(target=evaluate_detector, args=(detector,))
-    pEvalDet.start()
+if (len(sys.argv)>1):
+    evaluate_detector(detectors.detector_list[int(sys.argv[1])])
+else:
+    for detector in detectors.detector_list:
+        pEvalDet = Process(target=evaluate_detector, args=(detector,))
+        pEvalDet.start()
