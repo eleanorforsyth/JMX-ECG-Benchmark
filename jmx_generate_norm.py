@@ -96,19 +96,19 @@ for detector in detectors.detector_list:
 
         if exist==True: # only proceed if an annotation exists
             detected_peaks = detectorfunc(data) # call detector class for current detector
-            interval_results = jmx_analysis.evaluate(detected_peaks, data_anno, fs) # perform interval based analysis
+            interval_results = jmx_analysis.evaluate(detected_peaks, data_anno, fs, len(data)) # perform interval based analysis
             avgjit = np.average(interval_results[jmx_analysis.key_jitter])
             jmx = np.array([avgjit,
                             interval_results[jmx_analysis.key_missed],
                             interval_results[jmx_analysis.key_extra],
-                            interval_results[jmx_analysis.key_sensitivity],
+                            interval_results[jmx_analysis.key_accuracy],
                             
             ])
             jmx_acc = np.vstack( (jmx_acc,jmx) )
             jmx_norm = np.average(jmx_acc,axis=0)
-            print("J = {} sec, M = {} beats, X = {} beats, S = {}".format(jmx_norm[0],jmx_norm[1],jmx_norm[2],jmx_norm[3]))
+            print("J = {} sec, M = {} beats, X = {} beats, 1-A = {}".format(jmx_norm[0],jmx_norm[1],jmx_norm[2],jmx_norm[3]))
             f.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(jmx[0],jmx[1],jmx[2],jmx[3],
                                                       jmx_norm[0],jmx_norm[1],jmx_norm[2],jmx_norm[3]))
             f.flush()
-print("FINAL: J = {} sec, M = {} beats, X = {} beats".format(jmx_norm[0],jmx_norm[1],jmx_norm[2]))
+print("FINAL: J = {} sec, M = {} beats, X = {} beats, 1-A = {}".format(jmx_norm[0],jmx_norm[1],jmx_norm[2],jmx_norm[3]))
 f.close()

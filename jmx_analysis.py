@@ -17,7 +17,7 @@ b = -2 # number of annotated beats to trim from end
 key_jitter = "jitter"
 key_missed = "missed"
 key_extra = "extra"
-key_sensitivity = "sensitivity"
+key_accuracy = "sensitivity"
 
 norm_jmx = {}
 norm_jmx["jitter"] = 0.01024458750612104 # sec
@@ -77,7 +77,7 @@ def nearest_diff(source_array, nearest_match):
     return nearest, used_indices
 
 
-def evaluate(det_posn, anno_R, fs, trim=True):
+def evaluate(det_posn, anno_R, fs, nSamples, trim=True):
     """
     JMX analysis of interval variation, missed beat and extra detection positions
     det_posn: the timestamps of the detector in sample positions
@@ -146,12 +146,11 @@ def evaluate(det_posn, anno_R, fs, trim=True):
     fp = len_det_posn - len(interval_differences_for_jitter) # all detections - true positive = false positive
     fn = len_anno_R - len(interval_differences_for_jitter) # all detections
     tp = len(interval_differences_for_jitter)
+    tn = nSamples - (tp + fn + fp) # remaining samples
     sensitivity = False
-    if (tp + fn) > 0:
-        sensitivity = tp/(tp+fn)
-    # the sensitivity always tends to 100% but what we want is a measure for the error
-    # so 1-sensitivity gives quite a nice normalised value which is zero for perfect detection
-    jmx[key_sensitivity] = 1 - sensitivity
+    if (tp + tn + fp + fn) > 0:
+        accuracy = (tp+tn)/(tp + tn + fp + fn)
+    jmx[key_accuracy] = 1 - accuracy
     
     return jmx
 
