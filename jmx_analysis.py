@@ -13,12 +13,16 @@ import util
 a = 2 # number of annotated beats to trim from start
 b = -2 # number of annotated beats to trim from end
 
-norm_jmx = (2.991280672344543, 2.761072988147224, 4.480973175296319)
-
 # keys for the jmx dict:
 key_jitter = "jitter"
 key_missed = "missed"
 key_extra = "extra"
+key_sensitivity = "sensitivity"
+
+norm_jmx = {}
+norm_jmx["jitter"] = 0.01024458750612104 # sec
+norm_jmx["missed"] = 0.335 # beats
+norm_jmx["extra"] = 1.365 # beats
 
 def mapping_curve():
     # equate mean point to cube root of 0.5 so that if all three parameters are average, when multiplied together we get 50% as an overall result
@@ -73,7 +77,7 @@ def nearest_diff(source_array, nearest_match):
     return nearest, used_indices
 
 
-def evaluate(det_posn, anno_R, trim=True):
+def evaluate(det_posn, anno_R, fs, trim=True):
     """
     JMX analysis of interval variation, missed beat and extra detection positions
     det_posn: the timestamps of the detector in sample positions
@@ -128,7 +132,7 @@ def evaluate(det_posn, anno_R, trim=True):
         valid_interval_anno=int(used_anno[i][1] - used_anno[i-1][1])    
         valid_interval_det = (nearest_det[(used_anno[i][0])][1]) - (nearest_det[(used_anno[i-1][0])][1])
         
-        difference=valid_interval_det-valid_interval_anno
+        difference = np.abs((valid_interval_det - valid_interval_anno) / fs)
         interval_differences_for_jitter.append(difference)
 
     missed_beats = unused_anno #for clarity
@@ -139,6 +143,15 @@ def evaluate(det_posn, anno_R, trim=True):
     jmx[key_jitter] = interval_differences_for_jitter
     jmx[key_missed] = len(missed_beats)
     jmx[key_extra] = len(extra_beats)
+    fp = len_det_posn - len(interval_differences_for_jitter) # all detections - true positive = false positive
+    fn = len_anno_R - len(interval_differences_for_jitter) # all detections
+    tp = len(interval_differences_for_jitter)
+    sensitivity = False
+    if (tp + fn) > 0:
+        sensitivity = tp/(tp+fn)
+    # the sensitivity always tends to 100% but what we want is a measure for the error
+    # so 1-sensitivity gives quite a nice normalised value which is zero for perfect detection
+    jmx[key_sensitivity] = 1 - sensitivity
     
     return jmx
 
@@ -148,7 +161,7 @@ def individual_score(jmx):
     Takes a jmx and calculates the relative jmx benchmark of them between 0 and 1.
     """
     for i in range(len(jmx)):
-        jmx = normalise_and_map(name_val, jmx_norm[i])
+        jmx = normalise_and_map(jmx[i], jmx_norm[i])
 
         
 def total_score(jmx):
