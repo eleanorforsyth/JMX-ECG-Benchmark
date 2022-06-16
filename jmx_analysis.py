@@ -8,45 +8,17 @@ annotated interval and the detected interval, and is not truly HRV as it is
 calculated not just at rest.
 """
 import numpy as np
+import util
 
 a = 2 # number of annotated beats to trim from start
 b = -2 # number of annotated beats to trim from end
 
-norm_jmx = [2.991280672344543, 2.761072988147224, 4.480973175296319]
+norm_jmx = (2.991280672344543, 2.761072988147224, 4.480973175296319)
 
-"""
-From the detected R peaks the function works itself backwards to
-calculate the median delay the detector introduces. This is used
-for benchmarking to compensate for different delays the detctors
-introduce.
-"""
-def calcMedianDelay(detected_peaks, anno):
-
-    r_peaks = []
-
-    for i in detected_peaks:
-        d = np.abs(i-anno)
-        ii = np.argmin(d)
-        r_peaks.append(d[ii])
-
-    m = int(np.median(r_peaks))
-    return m
-
-
-def trim_after_detection(detections, annotations, start_index, end_index):
-
-    # start_index = annotated index to start at after trimming
-    # end_index = annotated index to end at after trimming
-    det_start_posn=int((annotations[start_index]+annotations[start_index-1])/2) # allow for detection half interval before start point annotation
-    det_end_posn=int((annotations[end_index]+annotations[end_index+1])/2) # allow for detection half interval after end point annotation
-    
-    annotations_trimmed=annotations[start_index:(end_index+1)] # trim annotations to match trimmed detections
-    detections_trimmed = detections[ (detections >= det_start_posn) & (detections <= det_end_posn) ] # remove detections with positions outwith range
-    
-    return detections_trimmed, annotations_trimmed
-
-
-
+# keys for the jmx dict:
+key_jitter = "jitter"
+key_missed = "missed"
+key_extra = "extra"
 
 def mapping_curve():
     # equate mean point to cube root of 0.5 so that if all three parameters are average, when multiplied together we get 50% as an overall result
@@ -108,11 +80,11 @@ def evaluate(det_posn, anno_R, trim=True):
     anno_R: the ground truth in samples
     """
     
-    delay_correction = calcMedianDelay(det_posn, anno_R)
+    delay_correction = util.calcMedianDelay(det_posn, anno_R)
     det_posn = np.array(det_posn)-int(delay_correction) # Correction for detector delay
                     
     if trim==True:
-        det_posn, anno_R = trim_after_detection(det_posn, anno_R, a, b)
+        det_posn, anno_R = util.trim_after_detection(det_posn, anno_R, a, b)
         
     if len(det_posn)<=10:
         warning='WARNING: Less than ten detections'
@@ -161,9 +133,14 @@ def evaluate(det_posn, anno_R, trim=True):
 
     missed_beats = unused_anno #for clarity
     extra_beats = extra_det_posn #for clarity
-    
-    return interval_differences_for_jitter, len(missed_beats), len(extra_beats)
 
+    jmx = {}
+
+    jmx[key_jitter] = interval_differences_for_jitter
+    jmx[key_missed] = len(missed_beats)
+    jmx[key_extra] = len(extra_beats)
+    
+    return jmx
 
 
 def individual_score(jmx):

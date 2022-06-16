@@ -1,21 +1,5 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-"""
-This code will run all subjects, all experiments, all leads recordings through
-all detectors or a single detector as required.
-For each recording (for which there are annotations) passed through a detector
-the detection locations will be saved, and then these passed for interval
-analysis, where jitter, missed beats and extra/spurious detections are
-identified. Jitter is taken as the difference (in samples) between the
-annotated interval and the detected interval, and is not truly HRV as it is
-calculated not just at rest.
-For each recording (as above) passed through a detector, the jitter, missed
-beat sample locations and extra/spurious detection locations are all saved as
-seperate csv files. This means that all 'raw' interval analysis data is
-available for subsequent benchmarking, plotting or analysis by lead type,
-experiment, etc as desired and has not been combined in a way which results in
-loss of information.
-"""
 
 import sys
 import os
@@ -27,7 +11,7 @@ import pathlib # For local file use
 from multiprocessing import Process
 
 # The JMX analysis for a detector
-import jmx_analysis
+import sensitivity_analysis
 
 # directory where the results are stored
 resultsdir = "results"
@@ -56,15 +40,15 @@ def evaluate_detector(detector):
 
     analysed=0 # overall count of analysed subjects
 
-    jmx_leads = {} # initialise for data to be saved by lead and detector
+    sens_leads = {} # initialise for data to be saved by lead and detector
 
     for record_lead in all_recording_leads: # loop for all chosen leads
         
-        jmx_experiments = {}
+        sens_experiments = {}
         
         for experiment in all_experiments: # loop for all chosen experiments
             
-            jmx_subjects=[]
+            sens_subjects=[]
             
             for subject_number in range(0, 25): # loop for all subjects
                 
@@ -122,22 +106,22 @@ def evaluate_detector(detector):
 
                 if exist==True: # only proceed if an annotation exists
                     detected_peaks = detectorfunc(data) # call detector class for current detector
-                    interval_results = jmx_analysis.evaluate(detected_peaks, data_anno) # perform interval based analysis
-                    jmx_subjects.append(interval_results)
+                    interval_results = sensitivity_analysis.evaluate(detected_peaks, data_anno, fs/10) # perform interval based analysis
+                    sens_subjects.append(interval_results)
                     
             # ^ LOOP AROUND FOR NEXT SUBJECT
 
-            jmx_experiments[experiment] = jmx_subjects
+            sens_experiments[experiment] = sens_subjects
                         
         # ^ LOOP AROUND FOR NEXT EXPERIMENT
         
         # Add data for analysis by lead to (full array) 'data_det_lead' dictionary
         
-        jmx_leads[record_lead] = jmx_experiments
+        sens_leads[record_lead] = sens_experiments
         
     # ^ LOOP AROUND FOR NEXT LEAD
-    serialized_data = json.dumps(jmx_leads,indent="\t")
-    f = open(resultsdir+"/jmx_"+detectorname+".json","w")
+    serialized_data = json.dumps(sens_leads,indent="\t")
+    f = open(resultsdir+"/sens_"+detectorname+".json","w")
     f.write(serialized_data)
     f.close
 
