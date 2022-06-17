@@ -122,8 +122,8 @@ def evaluate_detector(detector):
 
                 if exist==True: # only proceed if an annotation exists
                     detected_peaks = detectorfunc(data) # call detector class for current detector
-                    interval_results = jmx_analysis.evaluate(detected_peaks, data_anno, fs, len(data)) # perform interval based analysis
-                    jmx_subjects.append(interval_results)
+                    jmx_result = jmx_analysis.evaluate(detected_peaks, data_anno, fs, len(data)) # perform interval based analysis
+                    jmx_subjects.append(jmx_result)
                     
             # ^ LOOP AROUND FOR NEXT SUBJECT
 

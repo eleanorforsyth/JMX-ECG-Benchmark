@@ -157,9 +157,11 @@ def evaluate(det_posn, anno_R, fs, nSamples, trim=True):
     tp = len(interval_differences_for_jitter)
     maxBeats = nSamples / fs * maxHR / 60
     tn = maxBeats - (tp + fn + fp) # remaining samples
-    accuracy = 0
     if (tp + tn + fp + fn) > 0:
         accuracy = (tp+tn)/(tp + tn + fp + fn)
-    jmx[key_accuracy] = accuracy
-    jmx[key_jmx] = score(jmx[key_jitter],accuracy)
+        jmx[key_accuracy] = accuracy
+        jmx[key_jmx] = score(jmx[key_jitter],accuracy)
+    else:
+        jmx[key_accuracy] = False
+        jmx[key_jmx] = False
     return jmx

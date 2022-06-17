@@ -20,7 +20,10 @@ def get_jmx(detector_name, leads, experiment):
     f = open(resultsdir+"/jmx_"+detector_name+".json","r")
     js = f.read()
     data = json.loads(js)
-    s = [(i["jmx"]*100) for i in data[leads][experiment]]
+    s = []
+    for i in data[leads][experiment]]:
+        if i["jmx"]:
+            s.append(i["jmx"]*100)
     return np.array(s)
 
 
