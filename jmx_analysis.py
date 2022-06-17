@@ -157,8 +157,8 @@ def evaluate(det_posn, anno_R, fs, nSamples, trim=True):
     jmx = {}
 
     jmx[key_jitter] = stats.median_absolute_deviation(interval_differences_for_jitter)
-    fp = len_det_posn - (1 + len(interval_differences_for_jitter)) # all detections - true positive = false positive
-    fn = len_anno_R - - (1 + len(interval_differences_for_jitter)) # all detections
+    fp = len_det_posn - len(interval_differences_for_jitter) - 1 # all detections - true positive = false positive
+    fn = len_anno_R - len(interval_differences_for_jitter) - 1 # all detections
     tp = len(interval_differences_for_jitter)
     maxBeats = nSamples / fs * maxHR / 60
     tn = maxBeats - (tp + fn + fp) # remaining samples
