@@ -16,11 +16,11 @@ plot_names = [i[0] for i in detectors.get_detector_list()]
 
 resultsdir = "results"
 
-def get_sensitivities(detector_name, leads, experiment):
-    f = open(resultsdir+"/sens_"+detector_name+".json","r")
+def get_jmx(detector_name, leads, experiment):
+    f = open(resultsdir+"/jmx_"+detector_name+".json","r")
     js = f.read()
     data = json.loads(js)
-    s = [i[0] for i in data[leads][experiment]]
+    s = [(i["jmx"]*100) for i in data[leads][experiment]]
     return np.array(s)
 
 
@@ -29,9 +29,9 @@ def get_result(det, leads, experiment):
     m = []
     s = []
     for det in det_names:
-        print(det,experiment,get_sensitivities(det, leads, experiment))
-        m.append(np.mean(get_sensitivities(det, leads, experiment)))
-        s.append(np.std(get_sensitivities(det, leads, experiment)))
+        print(det,experiment,get_jmx(det, leads, experiment))
+        m.append(np.mean(get_jmx(det, leads, experiment)))
+        s.append(np.std(get_jmx(det, leads, experiment)))
 
     return np.array(m),np.array(s)
 
@@ -68,11 +68,11 @@ cable_jogging_avg,gudb_cable_jogging_std = get_result(det_names, einth, 'jogging
 
 double_plot(cs_sitting_avg, gudb_cs_sitting_std,
             cable_sitting_avg, gudb_cable_sitting_std,
-            'Sensitivity (%)', 'Chest Strap', 'Loose Cables', 'GUDB: cable, sitting')
+            'JMX (%)', 'Chest Strap', 'Loose Cables', 'GUDB: cable, sitting')
 
 double_plot(cs_jogging_avg, gudb_cs_jogging_std,
             cable_jogging_avg, gudb_cable_jogging_std,
-            'Sensitivity (%)', 'Chest Strap', 'Loose Cables', 'GUDB: cable, jogging')
+            'JMX (%)', 'Chest Strap', 'Loose Cables', 'GUDB: cable, jogging')
 
 
 

@@ -14,7 +14,9 @@ from scipy import stats
 a = 2 # number of annotated beats to trim from start
 b = -2 # number of annotated beats to trim from end
 
-maxHR = 300 # used to detect the true negative detections
+# Used to determine how many beats could have been at a max heartrate.
+# This is used to estimate the true negatives (TN).
+maxHR = 300
 
 # keys for the jmx dict:
 key_jitter = "jitter"
@@ -76,6 +78,10 @@ def nearest_diff(source_array, nearest_match):
 
 
 def score(jitter,accuracy):
+    """
+    Calculates the JMX score by multiplying the normalised jitter
+    with the accuracy which in turn is based on missing and extra beats.
+    """
     jitter_score = mapping_jitter(jitter / norm_jitter) # normalised jitter 0..1
     return accuracy * jitter_score
 
@@ -85,6 +91,8 @@ def evaluate(det_posn, anno_R, fs, nSamples, trim=True):
     JMX analysis of interval variation, missed beat and extra detection positions
     det_posn: the timestamps of the detector in sample positions
     anno_R: the ground truth in samples
+    fs: sampling rate of the ECG file
+    nSamples: number of samples in the ECG file
     """
     
     delay_correction = util.calcMedianDelay(det_posn, anno_R)

@@ -1,20 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
-This code will run all subjects, all experiments, all leads recordings through
-all detectors or a single detector as required.
-For each recording (for which there are annotations) passed through a detector
-the detection locations will be saved, and then these passed for interval
-analysis, where jitter, missed beats and extra/spurious detections are
-identified. Jitter is taken as the difference (in samples) between the
-annotated interval and the detected interval, and is not truly HRV as it is
-calculated not just at rest.
-For each recording (as above) passed through a detector, the jitter, missed
-beat sample locations and extra/spurious detection locations are all saved as
-seperate csv files. This means that all 'raw' interval analysis data is
-available for subsequent benchmarking, plotting or analysis by lead type,
-experiment, etc as desired and has not been combined in a way which results in
-loss of information.
+Calculates the individual jitters, accuracy and JMX values.
+Outputs the averages and stores the inidividual ones in a file.
 """
 
 import sys
@@ -103,9 +91,8 @@ for detector in detectors.detector_list:
             jmx_results = np.vstack( (jmx_results,jmx) )
             jmx_avg = np.average(jmx_results,axis=0)
             s = jmx_analysis.score(jmx_avg[0],jmx_avg[1])
-            print("J = {:1.4f} sec, A = {:1.4f}, JMX = {:1.4f}".format(jmx_avg[0],jmx_avg[1],s))
-            f.write("{}\t{}\t{}\t{}\n".format(jmx[0],jmx[1],
-                                              jmx_avg[0],jmx_avg[1]))
+            print("J = {:1.4f} sec, A = {:1.4f}, JMX = {:1.4f}".format(jmx[0],jmx[1],s))
+            f.write("{}\t{}\t{}\t{}\n".format(jmx[0],jmx[1])
             f.flush()
 print("FINAL: J = {:1.4f} sec, A = {:1.4f}".format(jmx_avg[0],jmx_avg[1]))
 f.close()
