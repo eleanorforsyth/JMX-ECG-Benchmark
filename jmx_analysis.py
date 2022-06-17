@@ -22,6 +22,10 @@ maxHR = 300
 key_jitter = "jitter"
 key_accuracy = "accuracy"
 key_jmx = "jmx"
+key_tp = "TP"
+key_tn = "TN"
+key_fp = "FP"
+key_fn = "FN"
 
 norm_jitter = 4E-3 # sec, Cassirame et al. 2019
 
@@ -157,8 +161,12 @@ def evaluate(det_posn, anno_R, fs, nSamples, trim=True):
     tp = len(interval_differences_for_jitter)
     maxBeats = nSamples / fs * maxHR / 60
     tn = maxBeats - (tp + fn + fp) # remaining samples
+    jmx[key_tp] = tp
+    jmx[key_tn] = tn
+    jmx[key_fp] = fp
+    jmx[key_fn] = fn
     if (tp + tn + fp + fn) > 0:
-        accuracy = (tp+tn)/(tp + tn + fp + fn)
+        accuracy = (tp + tn)/(tp + tn + fp + fn)
         jmx[key_accuracy] = accuracy
         jmx[key_jmx] = score(jmx[key_jitter],accuracy)
     else:
