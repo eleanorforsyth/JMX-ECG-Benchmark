@@ -19,6 +19,7 @@ maxHR = 300 # used to detect the true negative detections
 # keys for the jmx dict:
 key_jitter = "jitter"
 key_accuracy = "accuracy"
+key_jmx = "jmx"
 
 norm_jitter = 4E-3 # sec, Cassirame et al. 2019
 
@@ -72,6 +73,11 @@ def nearest_diff(source_array, nearest_match):
             used_indices.append((index, nearest_match[index])) # save as tuple in used_indices
         
     return nearest, used_indices
+
+
+def score(jitter,accuracy):
+    jitter_score = mapping_jitter(jitter / norm_jitter) # normalised jitter 0..1
+    return accuracy * jitter_score
 
 
 def evaluate(det_posn, anno_R, fs, nSamples, trim=True):
@@ -143,13 +149,9 @@ def evaluate(det_posn, anno_R, fs, nSamples, trim=True):
     tp = len(interval_differences_for_jitter)
     maxBeats = nSamples / fs * maxHR / 60
     tn = maxBeats - (tp + fn + fp) # remaining samples
-    sensitivity = False
+    accuracy = 0
     if (tp + tn + fp + fn) > 0:
         accuracy = (tp+tn)/(tp + tn + fp + fn)
     jmx[key_accuracy] = accuracy
+    jmx[key_jmx] = score(jmx[key_jitter],accuracy)
     return jmx
-
-
-def score(jitter,accuracy):
-    jitter_score = mapping_jitter(jitter / norm_jitter) # normalised jitter 0..1
-    return accuracy * jitter_score
