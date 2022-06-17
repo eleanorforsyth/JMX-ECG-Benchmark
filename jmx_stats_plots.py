@@ -21,7 +21,7 @@ def get_jmx(detector_name, leads, experiment):
     js = f.read()
     data = json.loads(js)
     s = []
-    for i in data[leads][experiment]]:
+    for i in data[leads][experiment]:
         if i["jmx"]:
             s.append(i["jmx"]*100)
     return np.array(s)

@@ -14,9 +14,10 @@ from scipy import stats
 a = 2 # number of annotated beats to trim from start
 b = -2 # number of annotated beats to trim from end
 
-# Used to determine how many beats could have been at a max heartrate.
-# This is used to estimate the true negatives (TN).
-maxHR = 300
+# Used to determine how many beats could have been at max heartrate.
+# This is needed to calculate the true negatives (TN).
+# https://www.cdc.gov/physicalactivity/basics/measuring/heartrate.htm
+maxHR = 220
 
 # keys for the jmx dict:
 key_jitter = "jitter"
@@ -156,8 +157,8 @@ def evaluate(det_posn, anno_R, fs, nSamples, trim=True):
     jmx = {}
 
     jmx[key_jitter] = stats.median_absolute_deviation(interval_differences_for_jitter)
-    fp = len_det_posn - len(interval_differences_for_jitter) # all detections - true positive = false positive
-    fn = len_anno_R - len(interval_differences_for_jitter) # all detections
+    fp = len_det_posn - (1 + len(interval_differences_for_jitter)) # all detections - true positive = false positive
+    fn = len_anno_R - - (1 + len(interval_differences_for_jitter)) # all detections
     tp = len(interval_differences_for_jitter)
     maxBeats = nSamples / fs * maxHR / 60
     tn = maxBeats - (tp + fn + fp) # remaining samples
