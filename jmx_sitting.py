@@ -46,8 +46,7 @@ current_dir = pathlib.Path(__file__).resolve()
 recording_leads = "einthoven_ii"
 experiment = "sitting"
 
-jmx_acc = np.empty((0,4))
-jmx_norm = np.empty((0,4))
+jmx_results = np.empty((0,2))
 
 f = open("norm_calc.tsv","w")
 
@@ -97,18 +96,16 @@ for detector in detectors.detector_list:
         if exist==True: # only proceed if an annotation exists
             detected_peaks = detectorfunc(data) # call detector class for current detector
             interval_results = jmx_analysis.evaluate(detected_peaks, data_anno, fs, len(data)) # perform interval based analysis
-            avgjit = np.average(interval_results[jmx_analysis.key_jitter])
-            jmx = np.array([avgjit,
-                            interval_results[jmx_analysis.key_missed],
-                            interval_results[jmx_analysis.key_extra],
+            jmx = np.array([interval_results[jmx_analysis.key_jitter],
                             interval_results[jmx_analysis.key_accuracy],
                             
             ])
-            jmx_acc = np.vstack( (jmx_acc,jmx) )
-            jmx_norm = np.average(jmx_acc,axis=0)
-            print("J = {} sec, M = {} beats, X = {} beats, 1-A = {}".format(jmx_norm[0],jmx_norm[1],jmx_norm[2],jmx_norm[3]))
-            f.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(jmx[0],jmx[1],jmx[2],jmx[3],
-                                                      jmx_norm[0],jmx_norm[1],jmx_norm[2],jmx_norm[3]))
+            jmx_results = np.vstack( (jmx_results,jmx) )
+            jmx_avg = np.average(jmx_results,axis=0)
+            s = jmx_analysis.score(jmx_avg[0],jmx_avg[1])
+            print("J = {:1.4f} sec, A = {:1.4f}, JMX = {:1.4f}".format(jmx_avg[0],jmx_avg[1],s))
+            f.write("{}\t{}\t{}\t{}\n".format(jmx[0],jmx[1],
+                                              jmx_avg[0],jmx_avg[1]))
             f.flush()
-print("FINAL: J = {} sec, M = {} beats, X = {} beats, 1-A = {}".format(jmx_norm[0],jmx_norm[1],jmx_norm[2],jmx_norm[3]))
+print("FINAL: J = {:1.4f} sec, A = {:1.4f}".format(jmx_avg[0],jmx_avg[1]))
 f.close()

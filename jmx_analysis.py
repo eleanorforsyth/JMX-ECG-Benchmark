@@ -9,20 +9,18 @@ calculated not just at rest.
 """
 import numpy as np
 import util
+from scipy import stats
 
 a = 2 # number of annotated beats to trim from start
 b = -2 # number of annotated beats to trim from end
 
+maxHR = 300 # used to detect the true negative detections
+
 # keys for the jmx dict:
 key_jitter = "jitter"
-key_missed = "missed"
-key_extra = "extra"
-key_accuracy = "sensitivity"
+key_accuracy = "accuracy"
 
-norm_jmx = {}
-norm_jmx["jitter"] = 0.01024458750612104 # sec
-norm_jmx["missed"] = 0.335 # beats
-norm_jmx["extra"] = 1.365 # beats
+norm_jitter = 4E-3 # sec, Cassirame et al. 2019
 
 def mapping_curve():
     # equate mean point to cube root of 0.5 so that if all three parameters are average, when multiplied together we get 50% as an overall result
@@ -41,19 +39,18 @@ def mapping_curve():
     return z
 
 
-def normalise_and_map(param,norm):
+def mapping_jitter(x):
     # Normalises and maps to benchmark value using 'poly' 3rd order polynomial
     poly=mapping_curve()
-    param_norm = param / norm;
-    if param_norm<=10.0: # Is normalised param less than 10x the global reference?
-        x = param_norm    
-        param_mapped=(poly[0]*x*x*x)+(poly[1]*x*x)+(poly[2]*x)+poly[3]
+    
+    if x<=10.0: # Is normalised param less than 10x the global reference?
+        j_mapped=(poly[0]*x*x*x)+(poly[1]*x*x)+(poly[2]*x)+poly[3]
     else:
-        param_mapped=0.0 # if the input parameter is greater than 10x the global
+        j_mapped=0.0 # if the input parameter is greater than 10x the global
         # reference, a returned value of 0.0 will signify failure as a detector,
         # and when multiplied, the overall benchmark will also be 0
-    
-    return param_mapped
+
+    return j_mapped
 
 
 def nearest_diff(source_array, nearest_match):
@@ -140,32 +137,19 @@ def evaluate(det_posn, anno_R, fs, nSamples, trim=True):
 
     jmx = {}
 
-    jmx[key_jitter] = interval_differences_for_jitter
-    jmx[key_missed] = len(missed_beats)
-    jmx[key_extra] = len(extra_beats)
+    jmx[key_jitter] = stats.median_absolute_deviation(interval_differences_for_jitter)
     fp = len_det_posn - len(interval_differences_for_jitter) # all detections - true positive = false positive
     fn = len_anno_R - len(interval_differences_for_jitter) # all detections
     tp = len(interval_differences_for_jitter)
-    tn = nSamples - (tp + fn + fp) # remaining samples
+    maxBeats = nSamples / fs * maxHR / 60
+    tn = maxBeats - (tp + fn + fp) # remaining samples
     sensitivity = False
     if (tp + tn + fp + fn) > 0:
         accuracy = (tp+tn)/(tp + tn + fp + fn)
-    jmx[key_accuracy] = 1 - accuracy
-    
+    jmx[key_accuracy] = accuracy
     return jmx
 
 
-def individual_score(jmx):
-    """
-    Takes a jmx and calculates the relative jmx benchmark of them between 0 and 1.
-    """
-    for i in range(len(jmx)):
-        jmx = normalise_and_map(jmx[i], jmx_norm[i])
-
-        
-def total_score(jmx):
-    jmx =  normalise_jmx(jmx)
-    j = 1.0
-    for i in jmx:
-        j = j * i
-    return j
+def score(jitter,accuracy):
+    jitter_score = mapping_jitter(jitter / norm_jitter) # normalised jitter 0..1
+    return accuracy * jitter_score
