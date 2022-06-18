@@ -3,9 +3,8 @@ JMX analysis
 ============
 Analyses a detector for interval
 analysis, where Jitter, Missed beats and eXtra/spurious detections are
-identified. Jitter is taken as the difference (in samples) between the
-annotated interval and the detected interval, and is not truly HRV as it is
-calculated not just at rest.
+identified. Jitter is taken as the difference between the
+annotated interval and the detected interval.
 """
 import numpy as np
 import util
@@ -28,16 +27,16 @@ key_tn = "TN"
 key_fp = "FP"
 key_fn = "FN"
 
-norm_jitter = 4E-3 # sec, Cassirame et al. 2019
+# Cassirame et al. 2019 requires a jitter of less than 4ms for
+# a detector which can analyse HRV. With the mapping curve below
+# that gives then an 80% rating for the jitter. Of course jitter
+# of zero is best!
+norm_jitter = 4E-3 # sec
 
 def mapping_curve():
-    # equate mean point to cube root of 0.5 so that if all three parameters are average, when multiplied together we get 50% as an overall result
-    for_x_is_1 = 0.5 ** (1. / 3) # i.e cube root of 0.5
-    # To use individual parameters for comparison, use parameter^3, again to make 0.5=mean
-    
+    ratio_is_1 = 0.8 # gives 80% rating at norm_jitter
     x = np.array([0.0, 1.0, 6.0, 10.0]) # 'source' input points for piecewise mapping
-    # x = np.array([0.0, 1.0, 8.0, 15.0]) # alternative mapping for more detail in lower values.
-    y = np.array([1.0, for_x_is_1, 0.2, 0.0]) # 'destination' output points for piecewise mapping
+    y = np.array([1.0, ratio_is_1, 0.2, 0.0]) # 'destination' output points for piecewise mapping
     z = np.polyfit(x, y, 3) # z holds the polynomial coefficients of 3rd order curve fit
     # i.e. z[0] = coeff of x^3, z[1] = coeff of x^2, z[2] = coeff of x, z[3] = constant
     # If piecewise mapping points are changed, check that polynomial approximation
@@ -75,7 +74,7 @@ def nearest_diff(source_array, nearest_match):
         index=np.abs(diff).argmin() # return the index of the smallest difference value
         nearest[i, 0] = index # store the value of that smallest difference in array 'nearest' at position 'i'
         nearest[i, 1] = nearest_match[index]
-        nearest[i,2] = source_array[i] # store actual 'source' position in nearest at position i
+        nearest[i, 2] = source_array[i] # store actual 'source' position in nearest at position i
         if i==0 or index> nearest[i-1, 0]: # Eliminate any multiple matches
             used_indices.append((index, nearest_match[index])) # save as tuple in used_indices
         
