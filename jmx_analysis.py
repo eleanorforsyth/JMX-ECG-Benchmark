@@ -58,25 +58,23 @@ def mapping_jitter(x):
     return j_mapped
 
 
-def nearest_diff(source_array, nearest_match):
+def nearest_diff(annotation, nearest_match):
     # Calculates the nearest difference between values in two arrays and saves
     # index and sample position of nearest
     diff=[] # Temporary working array for all differences
     used_indices=[] # Array which will contain only one instance of nearest matches
     
-    len_source_array=len(source_array)
-    nearest=np.zeros((len_source_array,3)) # store nearest index and position
+    len_annotation=len(annotation)
+    nearest=np.zeros(len_annotation) # store nearest index and position
     
-    for i in range (0,len_source_array): # scan through 'source' peaks 
-        diff = nearest_match - source_array[i] # subtract ith source array value from ALL nearest match values
-        index=np.abs(diff).argmin() # return the index of the smallest difference value
-        nearest[i, 0] = index # store the value of that smallest difference in array 'nearest' at position 'i'
-        nearest[i, 1] = nearest_match[index]
-        nearest[i, 2] = source_array[i] # store actual 'source' position in nearest at position i
-        if i==0 or index> nearest[i-1, 0]: # Eliminate any multiple matches
-            used_indices.append((index, nearest_match[index])) # save as tuple in used_indices
+    for i in range(len_annotation): # scan through 'source' peaks 
+        diff = nearest_match - annotation[i] # subtract ith source array value from ALL nearest match values
+        index = np.abs(diff).argmin() # return the index of the smallest difference value
+        nearest[i] = index # store the value of that smallest difference in array 'nearest' at position 'i'
+        if (i == 0) or (index > nearest[i-1]): # Eliminate any multiple matches
+            used_indices.append((nearest_match[index], annotation[i])) # save as tuple in used_indices
         
-    return nearest, used_indices
+    return used_indices
 
 
 def score(jitter,accuracy):
@@ -118,49 +116,21 @@ def evaluate(det_posn, anno_R, fs, nSamples, trim=True):
     # Number of detected R peaks
     len_det_posn = len(det_posn)
 
-    # return nearest anno index and position
-    nearest_anno, used_anno = nearest_diff(det_posn, anno_R)
-
-    # return nearest anno index and position
-    nearest_det, used_det = nearest_diff(anno_R, det_posn) 
+    # return anno / detector pairs
+    anno_det_pairs = nearest_diff(anno_R, det_posn) 
     
-    """ MISSED BEAT IDENTIFICATION """
-    # Generate array of unpaired annotated beats = missed beats
-    # First fill up the array with all annotation positions
-    unused_anno = np.arange(len_anno_R)
-    unused_anno = unused_anno.astype(int)
-    for x in reversed(used_anno): # work backwards, deleting used annotations
-        index1 = x[0] # index of used anno is first in tuple
-        unused_anno = np.delete(unused_anno, index1)
-    
-    """ EXTRA BEAT - IDENTIFICATION """
-    # Find 'unpaired' detections which are NOT the nearest match to annotated positions
-    # starting point - now remove any paired detection positions
-    extra_det_posn = det_posn 
-
-    # work backwards through extra_det_posn deleting already 'paired' detection
-    for i in range(len_det_posn-1, -1, -1): 
-        # print(i)
-        for x in used_det:
-            if det_posn[i] == x[1]: # if detected position already 'used'
-                extra_det_posn = np.delete(extra_det_posn, i, 0)
-          
-    """ TEMPORAL ANALYSIS SECTION """
     differences_for_jitter=[]
         
-    for i in range(len(used_anno)): 
+    for i in anno_det_pairs: 
 
         # ground truth
-        valid_anno = int(used_anno[i][1])
+        valid_anno = int(i[0])
 
         # detection position
-        valid_det = nearest_det[(used_anno[i][0])][1]
+        valid_det = int(i[1])
         
         difference = np.abs((valid_det - valid_anno) / fs)
         differences_for_jitter.append(difference)
-
-    missed_beats = unused_anno #for clarity
-    extra_beats = extra_det_posn #for clarity
 
     jmx = {}
 
@@ -181,4 +151,5 @@ def evaluate(det_posn, anno_R, fs, nSamples, trim=True):
     else:
         jmx[key_accuracy] = False
         jmx[key_jmx] = False
+    print(jmx)
     return jmx
