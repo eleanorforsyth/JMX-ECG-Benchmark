@@ -61,20 +61,32 @@ def mapping_jitter(x):
 def nearest_diff(annotation, nearest_match):
     # Calculates the nearest difference between values in two arrays and saves
     # index and sample position of nearest
-    diff=[] # Temporary working array for all differences
-    used_indices=[] # Array which will contain only one instance of nearest matches
     
     len_annotation=len(annotation)
-    last_nearest=0 # store last nearest index
-    
+
+    # Array which will contain matches for all annotations no matter if the actual detection is missing
+    used_indices=[] 
     for i in range(len_annotation): # scan through 'source' peaks 
         diff = nearest_match - annotation[i] # subtract ith source array value from ALL nearest match values
         index = np.abs(diff).argmin() # return the index of the smallest difference value
-        if index > last_nearest: # Eliminate any multiple matches
-            used_indices.append((nearest_match[index], annotation[i])) # save as tuple in used_indices
-        last_nearest = index # save the index of that smallest difference
+        used_indices.append((index,np.abs(nearest_match[index]-annotation[i]))) # save as tuple in used_indices
+
+    # Array which will contain unique instances by always choosing the one which has the shortest time
+    # difference.
+    # 
+    unique_diffs=[]
+    index_used=[]
+    for j in used_indices:
+        if not (j[0] in index_used):
+            uni = []
+            for k in used_indices:
+                if k[0] == j[0]:
+                    uni.append(k)
+            i = np.argmin(uni,0)[1]
+            unique_diffs.append(uni[i][1])
+            index_used.append(j[0])
         
-    return used_indices
+    return unique_diffs
 
 
 def score(jitter,accuracy):
@@ -121,15 +133,9 @@ def evaluate(det_posn, anno_R, fs, nSamples, trim=True):
     
     differences_for_jitter=[]
         
-    for i in anno_det_pairs: 
+    for d in anno_det_pairs: 
 
-        # ground truth
-        valid_anno = int(i[0])
-
-        # detection position
-        valid_det = int(i[1])
-        
-        difference = np.abs((valid_det - valid_anno) / fs)
+        difference = np.abs(d / fs)
         differences_for_jitter.append(difference)
 
     jmx = {}
