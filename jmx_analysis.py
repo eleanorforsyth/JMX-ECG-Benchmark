@@ -65,14 +65,14 @@ def nearest_diff(annotation, nearest_match):
     used_indices=[] # Array which will contain only one instance of nearest matches
     
     len_annotation=len(annotation)
-    nearest=np.zeros(len_annotation) # store nearest index and position
+    last_nearest=0 # store last nearest index
     
     for i in range(len_annotation): # scan through 'source' peaks 
         diff = nearest_match - annotation[i] # subtract ith source array value from ALL nearest match values
         index = np.abs(diff).argmin() # return the index of the smallest difference value
-        nearest[i] = index # store the value of that smallest difference in array 'nearest' at position 'i'
-        if (i == 0) or (index > nearest[i-1]): # Eliminate any multiple matches
+        if index > last_nearest: # Eliminate any multiple matches
             used_indices.append((nearest_match[index], annotation[i])) # save as tuple in used_indices
+        last_nearest = index # save the index of that smallest difference
         
     return used_indices
 
