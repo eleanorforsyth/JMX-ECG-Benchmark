@@ -52,11 +52,13 @@ Download the templates file and the folder is placed within the working director
 
 ### jmx_analysis.py
 
-JMX analysis of interval variation, missed beat and extra detection positions
+JMX analysis of interval variation, missed beat and extra detection positions:
 
 ```
 evaluate(det_posn, anno_R, fs, nSamples, trim=True)
 ```
+
+Arguments:
 
     - det_posn: the timestamps of the detector in sample positions
     - anno_R: the ground truth in samples
@@ -64,7 +66,9 @@ evaluate(det_posn, anno_R, fs, nSamples, trim=True)
     - nSamples: number of samples in the ECG file
     - trim: trims 2 detections from start/end of det_posn/anno_R
 
-returns:
+
+Returns:
+
     - jmx[key_jitter]   : jitter in s
     - jmx[key_tp]       : true positive beats
     - jmx[key_tn]       : true negative beats
