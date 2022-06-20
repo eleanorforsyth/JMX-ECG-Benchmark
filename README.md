@@ -50,6 +50,30 @@ Download the templates file and the folder is placed within the working director
 
 ## Usage
 
+### jmx_analysis.py
+
+JMX analysis of interval variation, missed beat and extra detection positions
+
+```
+evaluate(det_posn, anno_R, fs, nSamples, trim=True)
+```
+
+    - det_posn: the timestamps of the detector in sample positions
+    - anno_R: the ground truth in samples
+    - fs: sampling rate of the ECG file
+    - nSamples: number of samples in the ECG file
+    - trim: trims 2 detections from start/end of det_posn/anno_R
+
+returns:
+    - jmx[key_jitter]   : jitter in s
+    - jmx[key_tp]       : true positive beats
+    - jmx[key_tn]       : true negative beats
+    - jmx[key_fp]       : false positive beats
+    - jmx[key_fn]       : false negative beats
+    - jmx[key_accuracy] : accuracy
+    - jmx[key_jmx]      : JMX Score
+
+
 ### jmx_evaluate_all_detectors.py
 
 The code runs the detectors with all subjects, all leads, and all
@@ -64,3 +88,8 @@ extra/missed beats, the remaining detected beats could be considered
 The overall JMX Benchmark values for Einthoven
 II and chest strap results are shown together on a bar graph for
 comparison for sitting and jogging.
+
+# Credit
+
+ - Eleanor Forsyth
+ - Bernd Porr <bernd.porr@glasgow.ac.uk>

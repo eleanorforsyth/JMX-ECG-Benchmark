@@ -2,8 +2,12 @@
 JMX analysis
 ============
 Analyses a detector for Jitter, Missed beats and eXtra/spurious detections.
-Missed beats and extra/spurios detections are then used to calculate precision
+At the heart is the jitter detection algorithm on annotation/detection
+pairs. A Jitter of 0ms gives a 100% score, A jitter of 4ms 80% score
+and drops to 0% for 40ms jitter.
+Missed beats and extra/spurios detections are then used to calculate Accuracy
 as a normalised measure independent on the number of beats.
+The overall score is then: JMX = Jitter/% * Accuracy/%.
 """
 import numpy as np
 import util
@@ -105,6 +109,14 @@ def evaluate(det_posn, anno_R, fs, nSamples, trim=True):
     anno_R: the ground truth in samples
     fs: sampling rate of the ECG file
     nSamples: number of samples in the ECG file
+    returns:
+    jmx[key_jitter]   : jitter in s
+    jmx[key_tp]       : true positive beats
+    jmx[key_tn]       : true negative beats
+    jmx[key_fp]       : false positive beats
+    jmx[key_fn]       : false negative beats
+    jmx[key_accuracy] : accuracy
+    jmx[key_jmx]      : JMX Score
     """
 
     # Median delay of the detection against the annotations
