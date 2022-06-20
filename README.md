@@ -80,12 +80,9 @@ Returns:
 
 ### jmx_evaluate_all_detectors.py
 
-The code runs the detectors with all subjects, all leads, and all
-experiments. The heartbeat detection locations are saved and the
-scenarios that have annotated R-peaks are used for benchmarking the
-detectors. After discounting the
-extra/missed beats, the remaining detected beats could be considered
-"true" detections
+The code evaluates all ECG detectors with all subjects, all leads, and all
+experiments. It outputs separate json files for every detector and stores
+them in the `results` directory.
 
 ### jmx_stats_plots.py
 
