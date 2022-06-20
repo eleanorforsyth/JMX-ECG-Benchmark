@@ -45,9 +45,6 @@ pip install ecg_gudb_database
 pip3 install ecg_gudb_database
 ```
 
----
-Download the templates file and the folder is placed within the working directory. As well as individualised templates it includes the default templates for 250Hz and 360Hz.
-
 ## Usage
 
 ### jmx_analysis.py
