@@ -21,18 +21,18 @@ ways errors show up in ECG heartbeat detection.
 
 ## Prerequisites
 
-Install py- ecg-detectors ([Howell and Porr, 2019](https://doi.org/10.5281/zenodo.3353396)).
+Install `py-ecg-detectors` ([Howell and Porr, 2019](https://doi.org/10.5281/zenodo.3353396)).
 
 Linux / Mac:
-```bash
+```
 pip3 install py-ecg-detectors [--user]
 ```
 Windows:
-```bash
+```
 pip install py-ecg-detectors [--user]
 ```
 From source:
-```bash
+```
 python3 setup.py install [--user]
 ```
 *Use the option --user if you don't have system-wise write permission.*
@@ -92,16 +92,19 @@ comparison for sitting and jogging.
 
 ![alt tag](jmx.png)
 
-# Traditional sensitivity analysis on a fixed temproal window
+# Traditional sensitivity analysis
 
-For sensitivity analysis on an `fs/10` sample long temporal window run:
+For a sensitivity analysis on an `fs/10` samples temporal window run:
 
 ```
-sensitivity_evaluate_all_detectors.py
-sensitivity_stats_plots.py
+python sensitivity_evaluate_all_detectors.py
+python sensitivity_stats_plots.py
 ```
 
 ![alt tag](sensitivity.png)
+
+Note that a pure sensitivity analysis on a wide temporal window
+yields mostly 99-100% sensitivity.
 
 # Credit
 
