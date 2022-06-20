@@ -19,7 +19,7 @@ of application-specific performance to truly represent an overall
 score that can be compared across applications encompassing all the
 ways errors show up in ECG heartbeat detection.
 
-## Installation
+## Prerequisites
 
 Install py- ecg-detectors ([Howell and Porr, 2019](https://doi.org/10.5281/zenodo.3353396)).
 
@@ -92,6 +92,19 @@ extra/missed beats, the remaining detected beats could be considered
 The overall JMX Benchmark values for Einthoven
 II and chest strap results are shown together on a bar graph for
 comparison for sitting and jogging.
+
+![alt tag](jmx.png)
+
+# Traditional sensitivity analysis on a fixed temproal window
+
+For sensitivity analysis on an `fs/10` sample long temporal window run:
+
+```
+sensitivity_evaluate_all_detectors.py
+sensitivity_stats_plots.py
+```
+
+![alt tag](sensitivity.png)
 
 # Credit
 

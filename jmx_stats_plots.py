@@ -71,11 +71,11 @@ cable_jogging_avg,gudb_cable_jogging_std = get_result(det_names, einth, 'jogging
 
 double_plot(cs_sitting_avg, gudb_cs_sitting_std,
             cable_sitting_avg, gudb_cable_sitting_std,
-            'JMX (%)', 'Chest Strap', 'Loose Cables', 'GUDB: cable, sitting')
+            'JMX (%)', 'Chest Strap', 'Loose Cables', 'Sitting')
 
 double_plot(cs_jogging_avg, gudb_cs_jogging_std,
             cable_jogging_avg, gudb_cable_jogging_std,
-            'JMX (%)', 'Chest Strap', 'Loose Cables', 'GUDB: cable, jogging')
+            'JMX (%)', 'Chest Strap', 'Loose Cables', 'Jogging')
 
 
 
