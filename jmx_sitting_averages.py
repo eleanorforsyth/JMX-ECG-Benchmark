@@ -2,7 +2,12 @@
 # -*- coding: utf-8 -*-
 """
 Calculates the individual jitters, accuracy and JMX values.
-Outputs the averages and stores the inidividual ones in a file.
+Outputs the averages and stores the individual ones in a file.
+plot with gnuplot with:
+gnuplot> plot "norm_calc.tsv" using 1 with lines, "norm_calc.tsv" using 3 with lines 
+to plot the momentary jmx values and the current average at that point.
+gnuplot> plot "norm_calc.tsv" using 2 with lines, "norm_calc.tsv" using 4 with lines 
+To plot the accuracy and the average.
 """
 
 import sys
