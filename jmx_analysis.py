@@ -17,11 +17,8 @@ from scipy import stats
 # This is needed to calculate the true negatives (TN).
 maxHR = 220
 
-# Cassirame et al. 2019 requires a jitter of less than 4ms for
-# a detector which can analyse HRV. With the mapping curve below
-# that gives then an 80% rating for the jitter. Of course jitter
-# of zero is best and gives 100%.
-norm_jitter = 4E-3 # sec
+# The standard jitter time at the moment for standard detectors.
+norm_jitter = 12E-3 # sec
 
 a = 2 # number of annotated beats to trim from start
 b = -2 # number of annotated beats to trim from end
@@ -36,7 +33,7 @@ key_fp = "FP" # False positives
 key_fn = "FN" # False negatives
 
 def mapping_curve():
-    ratio_is_1 = 0.8 # gives 80% rating at norm_jitter
+    ratio_is_1 = 0.5 # gives 50% rating at norm_jitter
     x = np.array([0.0, 1.0, 6.0, 10.0]) # 'source' input points for piecewise mapping
     y = np.array([1.0, ratio_is_1, 0.2, 0.0]) # 'destination' output points for piecewise mapping
     z = np.polyfit(x, y, 3) # z holds the polynomial coefficients of 3rd order curve fit
