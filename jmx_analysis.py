@@ -32,31 +32,10 @@ key_tn = "TN" # True negatives
 key_fp = "FP" # False positives
 key_fn = "FN" # False negatives
 
-def mapping_curve():
-    ratio_is_1 = 0.5 # gives 50% rating at norm_jitter
-    x = np.array([0.0, 1.0, 6.0, 10.0]) # 'source' input points for piecewise mapping
-    y = np.array([1.0, ratio_is_1, 0.2, 0.0]) # 'destination' output points for piecewise mapping
-    z = np.polyfit(x, y, 3) # z holds the polynomial coefficients of 3rd order curve fit
-    # i.e. z[0] = coeff of x^3, z[1] = coeff of x^2, z[2] = coeff of x, z[3] = constant
-    # If piecewise mapping points are changed, check that polynomial approximation
-    # curve is smooth and does not dip below zero - move 3rd input point (default 6.0)
-    # if required.
-    # To test plot 3rd order curve fit (uncomment to plot):
-    return z
-
-
 def mapping_jitter(x):
     # Normalises and maps to benchmark value using 'poly' 3rd order polynomial
-    poly=mapping_curve()
-    
-    if x<=10.0: # Is normalised param less than 10x the global reference?
-        j_mapped=(poly[0]*x*x*x)+(poly[1]*x*x)+(poly[2]*x)+poly[3]
-    else:
-        j_mapped=0.0 # if the input parameter is greater than 10x the global
-        # reference, a returned value of 0.0 will signify failure as a detector,
-        # and when multiplied, the overall benchmark will also be 0
 
-    return j_mapped
+    return 1/(x+1)
 
 
 def nearest_diff(annotation, nearest_match):
