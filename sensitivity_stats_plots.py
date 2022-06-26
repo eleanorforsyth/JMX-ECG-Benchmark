@@ -18,6 +18,8 @@ resultsdir = "results"
 
 alpha = 0.05
 
+min_sens = 90 # %
+
 def get_sensitivities(detector_name, leads, experiment):
     f = open(resultsdir+"/sens_"+detector_name+".json","r")
     js = f.read()
@@ -49,23 +51,16 @@ def print_stat(p):
 
     
 def calc_stats(leads, experiment):
-    d = 0
     print("Stats:",leads, experiment)
     print("      & ",end='')
     for det1 in det_names:
         print(det1," & ",end='')
     print("\\\\")
     for det1 in det_names:
-        print(det1," & ",end='')
         r1 = get_sensitivities(det1, leads, experiment)
-        for det2 in det_names:
-            r2 = get_sensitivities(det2, leads, experiment)
-            t,p = stats.ttest_ind(r1,r2)
-            print_stat(p)
-            if p < alpha:
-                d = d + 1
-        print("\\\\")
-    print("Significantly different results:",d,"Out of:",len(det_names)**2 - len(det_names))
+        t,p = stats.ttest_1samp(r1,min_sens,alternative='greater')
+        print_stat(p)
+    print()
 
     
 

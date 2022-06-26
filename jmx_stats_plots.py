@@ -18,6 +18,8 @@ resultsdir = "results"
 
 alpha = 0.05
 
+minjmx = 90 # %
+
 def get_jmx(detector_name, leads, experiment):
     f = open(resultsdir+"/jmx_"+detector_name+".json","r")
     js = f.read()
@@ -52,23 +54,16 @@ def print_stat(p):
 
     
 def calc_stats(leads, experiment):
-    d = 0
     print("Stats:",leads, experiment)
     print("      & ",end='')
     for det1 in det_names:
         print(det1," & ",end='')
     print("\\\\")
     for det1 in det_names:
-        print(det1," & ",end='')
         r1 = get_jmx(det1, leads, experiment)
-        for det2 in det_names:
-            r2 = get_jmx(det2, leads, experiment)
-            t,p = stats.ttest_ind(r1,r2)
-            print_stat(p)
-            if p < alpha:
-                d = d + 1
-        print("\\\\")
-    print("Significantly different results:",d,"Out of:",len(det_names)**2 - len(det_names))
+        t,p = stats.ttest_1samp(r1,minjmx,alternative='greater')
+        print_stat(p)
+    print()
 
     
 def double_plot(data1, std1, data2, std2, y_label, legend1, legend2, title=None):
@@ -94,25 +89,30 @@ def double_plot(data1, std1, data2, std2, y_label, legend1, legend2, title=None)
     return rects1, rects2
 
 
-cs_sitting_avg,gudb_cs_sitting_std = get_result(det_names, cs, 'sitting')
-cable_sitting_avg,gudb_cable_sitting_std = get_result(det_names, einth, 'sitting')
+cs_sitting_avg,cs_sitting_std = get_result(det_names, cs, 'sitting')
+einthoven_sitting_avg,einthoven_sitting_std = get_result(det_names, einth, 'sitting')
 
-cs_jogging_avg,gudb_cs_jogging_std = get_result(det_names, cs, 'jogging')
-cable_jogging_avg,gudb_cable_jogging_std = get_result(det_names, einth, 'jogging')
+cs_jogging_avg,cs_jogging_std = get_result(det_names, cs, 'jogging')
+einthoven_jogging_avg,einthoven_jogging_std = get_result(det_names, einth, 'jogging')
 
 
-double_plot(cs_sitting_avg, gudb_cs_sitting_std,
-            cable_sitting_avg, gudb_cable_sitting_std,
-            'JMX (%)', 'Chest Strap', 'Einthoven', 'Sitting')
+double_plot(einthoven_sitting_avg, einthoven_sitting_std,
+            einthoven_jogging_avg,einthoven_jogging_std,
+            'JMX (%)', 'Sitting', 'Jogging', 'Einthoven')
 
-double_plot(cs_jogging_avg, gudb_cs_jogging_std,
-            cable_jogging_avg, gudb_cable_jogging_std,
-            'JMX (%)', 'Chest Strap', 'Einthoven', 'Jogging')
+
+double_plot(cs_sitting_avg, cs_sitting_std,
+            cs_jogging_avg, cs_jogging_std,
+            'JMX (%)', 'Sitting', 'Jogging', 'Chest strap')
+
 
 
 calc_stats(einth,"sitting")
-calc_stats(cs,"sitting")
 calc_stats(einth,"jogging")
+
+print()
+
+calc_stats(cs,"sitting")
 calc_stats(cs,"jogging")
 
 
