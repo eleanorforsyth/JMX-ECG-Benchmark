@@ -39,7 +39,6 @@ def get_result(det, leads, experiment):
 
     return np.array(m),np.array(s)
 
-
 def print_stat(p):
     if p == None:
         print('--- & ',end='')
@@ -87,6 +86,11 @@ def double_plot(data1, std1, data2, std2, y_label, legend1, legend2, title=None)
 
     return rects1, rects2
 
+def print_result(title,data,std,legend):
+    print(title)
+    for i in zip(legend,data,std):
+        print("{}: {}+/-{}".format(i[0],i[1],i[2]))
+    print()
 
 cs_sitting_avg,cs_sitting_std = get_result(det_names, cs, 'sitting')
 einthoven_sitting_avg,einthoven_sitting_std = get_result(det_names, einth, 'sitting')
@@ -94,6 +98,13 @@ einthoven_sitting_avg,einthoven_sitting_std = get_result(det_names, einth, 'sitt
 cs_jogging_avg,cs_jogging_std = get_result(det_names, cs, 'jogging')
 einthoven_jogging_avg,einthoven_jogging_std = get_result(det_names, einth, 'jogging')
 
+print()
+
+print_result('Sitting Einthoven',einthoven_sitting_avg,einthoven_sitting_std,det_names)
+print_result('Jogging Einthoven',einthoven_jogging_avg,einthoven_jogging_std,det_names)
+
+print_result('Sitting chest strap',cs_sitting_avg,cs_sitting_std,det_names)
+print_result('Jogging chest strap',cs_jogging_avg,cs_jogging_std,det_names)
 
 double_plot(einthoven_sitting_avg, einthoven_sitting_std,
             einthoven_jogging_avg,einthoven_jogging_std,
