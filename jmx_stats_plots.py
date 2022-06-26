@@ -89,11 +89,26 @@ def double_plot(data1, std1, data2, std2, y_label, legend1, legend2, title=None)
     return rects1, rects2
 
 
+def print_result(title,data,std,legend):
+    print("JMX Score:",title)
+    for i in zip(legend,data,std):
+        print("{}: {:1.1f}+/-{:1.1f}".format(i[0],i[1],i[2]))
+    print()
+
+
 cs_sitting_avg,cs_sitting_std = get_result(det_names, cs, 'sitting')
 einthoven_sitting_avg,einthoven_sitting_std = get_result(det_names, einth, 'sitting')
 
 cs_jogging_avg,cs_jogging_std = get_result(det_names, cs, 'jogging')
 einthoven_jogging_avg,einthoven_jogging_std = get_result(det_names, einth, 'jogging')
+
+
+print_result('sitting Einthoven',einthoven_sitting_avg,einthoven_sitting_std,det_names)
+print_result('jogging Einthoven',einthoven_jogging_avg,einthoven_jogging_std,det_names)
+
+print_result('sitting chest strap',cs_sitting_avg,cs_sitting_std,det_names)
+print_result('jogging chest strap',cs_jogging_avg,cs_jogging_std,det_names)
+
 
 
 double_plot(einthoven_sitting_avg, einthoven_sitting_std,
