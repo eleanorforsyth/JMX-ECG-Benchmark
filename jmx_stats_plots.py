@@ -16,6 +16,8 @@ plot_names = [i[0] for i in detectors.get_detector_list()]
 
 resultsdir = "results"
 
+alpha = 0.05
+
 def get_jmx(detector_name, leads, experiment):
     f = open(resultsdir+"/jmx_"+detector_name+".json","r")
     js = f.read()
@@ -39,6 +41,36 @@ def get_result(det, leads, experiment):
     return np.array(m),np.array(s)
 
 
+def print_stat(p):
+    if p == None:
+        print('--- & ',end='')
+        return
+    s = ""
+    if p < alpha:
+        s = "*"
+    print('{:03.2f}{} & '.format(p,s),end='')
+
+    
+def calc_stats(leads, experiment):
+    d = 0
+    print("Stats:",leads, experiment)
+    print("      & ",end='')
+    for det1 in det_names:
+        print(det1," & ",end='')
+    print("\\\\")
+    for det1 in det_names:
+        print(det1," & ",end='')
+        r1 = get_jmx(det1, leads, experiment)
+        for det2 in det_names:
+            r2 = get_jmx(det2, leads, experiment)
+            t,p = stats.ttest_ind(r1,r2)
+            print_stat(p)
+            if p < alpha:
+                d = d + 1
+        print("\\\\")
+    print("Significantly different results:",d,"Out of:",len(det_names)**2 - len(det_names))
+
+    
 def double_plot(data1, std1, data2, std2, y_label, legend1, legend2, title=None):
     fig, ax = plt.subplots()
     x_pos = np.arange(len(plot_names))
@@ -77,6 +109,11 @@ double_plot(cs_jogging_avg, gudb_cs_jogging_std,
             cable_jogging_avg, gudb_cable_jogging_std,
             'JMX (%)', 'Chest Strap', 'Einthoven', 'Jogging')
 
+
+calc_stats(einth,"sitting")
+calc_stats(cs,"sitting")
+calc_stats(einth,"jogging")
+calc_stats(cs,"jogging")
 
 
 plt.show()
