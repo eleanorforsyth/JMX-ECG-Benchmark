@@ -20,8 +20,8 @@ maxHR = 220
 # The standard jitter time at the moment for standard detectors.
 norm_jitter = 12E-3 # sec
 
-a = 2 # number of annotated beats to trim from start
-b = -2 # number of annotated beats to trim from end
+a = 10 # number of annotated beats to trim from start
+b = -5 # number of annotated beats to trim from end
 
 # keys for the jmx dict:
 key_jitter = "jitter" # temproal jitter in s
